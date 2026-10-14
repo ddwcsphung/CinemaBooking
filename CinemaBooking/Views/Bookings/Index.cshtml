@@ -1,0 +1,131 @@
+﻿@model IEnumerable<CinemaBooking.Models.Booking>
+@using CinemaBooking.Models
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Vé của tôi";
+
+    var vi = CultureInfo.GetCultureInfo("vi-VN");
+
+    int currentPage = ViewBag.CurrentPage;
+    int totalPages = ViewBag.TotalPages;
+}
+
+<h1 class="mb-4">@ViewData["Title"]</h1>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        Bạn chưa có đơn đặt vé nào.
+    </div>
+
+    <a asp-controller="Catalog"
+       asp-action="Index"
+       class="btn btn-primary">
+        Khám phá phim
+    </a>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var booking in Model)
+        {
+            <div class="col-12">
+                <article class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap justify-content-between
+                                    align-items-start gap-2 mb-3">
+                            <h2 class="h5 mb-0">
+                                @booking.Showtime.Movie.Title
+                            </h2>
+
+                            @if (booking.PaymentStatus ==
+                                 BookingPaymentStatus.Paid)
+                            {
+                                <span class="badge bg-success">
+                                    Đã thanh toán
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">
+                                    Chưa thanh toán
+                                </span>
+                            }
+                        </div>
+
+                        <p class="mb-2 text-break">
+                            <strong>Mã đặt vé:</strong>
+                            @booking.BookingCode
+                        </p>
+
+                        <p class="mb-2">
+                            <strong>Phòng:</strong>
+                            @booking.Showtime.Room.Name
+                        </p>
+
+                        <p class="mb-2">
+                            <strong>Suất chiếu:</strong>
+                            @booking.Showtime.StartTime.ToString(
+                                "HH:mm dd/MM/yyyy")
+                        </p>
+
+                        <p class="mb-2">
+                            <strong>Thời điểm đặt:</strong>
+                            @(booking.CreatedAtUtc
+                                .ToOffset(TimeSpan.FromHours(7))
+                                .ToString("HH:mm dd/MM/yyyy"))
+                        </p>
+
+                        <p class="mb-3">
+                            <strong>Tổng tiền:</strong>
+                            @booking.TotalAmount.ToString("N0", vi) đ
+                        </p>
+
+                        <a asp-controller="Bookings"
+                           asp-action="Details"
+                           asp-route-id="@booking.Id"
+                           class="btn btn-outline-primary">
+                            Xem chi tiết
+                        </a>
+                    </div>
+                </article>
+            </div>
+        }
+    </div>
+
+    @if (totalPages > 1)
+    {
+        <nav aria-label="Phân trang vé của tôi" class="mt-4">
+            <ul class="pagination justify-content-center">
+                @if (currentPage > 1)
+                {
+                    <li class="page-item">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-page="@(currentPage - 1)">
+                            Trước
+                        </a>
+                    </li>
+                }
+
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        Trang @currentPage / @totalPages
+                    </span>
+                </li>
+
+                @if (currentPage < totalPages)
+                {
+                    <li class="page-item">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-page="@(currentPage + 1)">
+                            Sau
+                        </a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}
