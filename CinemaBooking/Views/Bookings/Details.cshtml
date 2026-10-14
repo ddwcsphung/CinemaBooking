@@ -1,0 +1,75 @@
+﻿@model CinemaBooking.Models.Booking
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Thông tin đặt vé";
+    var vi = CultureInfo.GetCultureInfo("vi-VN");
+
+    var seatNames = Model.BookingSeats
+        .OrderBy(bs => bs.Seat.RowLabel)
+        .ThenBy(bs => bs.Seat.SeatNumber)
+        .Select(bs => $"{bs.Seat.RowLabel}{bs.Seat.SeatNumber}");
+}
+
+<h1 class="mb-4">Thông tin đặt vé</h1>
+
+@if (TempData["BookingSuccess"] is string message)
+{
+    <div class="alert alert-success">
+        @message
+    </div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Mã đặt vé</dt>
+            <dd class="col-sm-9 text-break">@Model.BookingCode</dd>
+
+            <dt class="col-sm-3">Phim</dt>
+            <dd class="col-sm-9">@Model.Showtime.Movie.Title</dd>
+
+            <dt class="col-sm-3">Phòng</dt>
+            <dd class="col-sm-9">@Model.Showtime.Room.Name</dd>
+
+            <dt class="col-sm-3">Suất chiếu</dt>
+            <dd class="col-sm-9">
+                @Model.Showtime.StartTime.ToString("HH:mm dd/MM/yyyy")
+            </dd>
+
+            <dt class="col-sm-3">Ghế</dt>
+            <dd class="col-sm-9">@string.Join(", ", seatNames)</dd>
+
+            <dt class="col-sm-3">Thời điểm đặt</dt>
+            <dd class="col-sm-9">
+                @Model.CreatedAtUtc.ToOffset(TimeSpan.FromHours(7))
+                    .ToString("HH:mm dd/MM/yyyy")
+            </dd>
+
+            <dt class="col-sm-3">Tổng tiền</dt>
+            <dd class="col-sm-9">
+                <strong>@Model.TotalAmount.ToString("N0", vi) đ</strong>
+            </dd>
+
+            <dt class="col-sm-3">Thanh toán</dt>
+            <dd class="col-sm-9">
+                @(Model.PaymentStatus == BookingPaymentStatus.Paid
+                    ? "Đã thanh toán"
+                    : "Chưa thanh toán")
+            </dd>
+        </dl>
+    </div>
+</div>
+
+@if (Model.PaymentStatus == BookingPaymentStatus.Unpaid)
+{
+    <p class="mt-3">
+        Vui lòng cung cấp mã đặt vé tại quầy để thanh toán.
+    </p>
+}
+
+<a asp-controller="Catalog"
+   asp-action="Index"
+   class="btn btn-primary mt-3">
+    Tiếp tục xem phim
+</a>

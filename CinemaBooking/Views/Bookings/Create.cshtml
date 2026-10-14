@@ -1,0 +1,209 @@
+﻿@model CinemaBooking.ViewModels.BookingCreateViewModel
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Chọn ghế";
+    var vi = CultureInfo.GetCultureInfo("vi-VN");
+    var hasAvailableSeats = Model.Seats.Any(
+        s => s.IsActive && !s.IsBooked);
+}
+
+<h1 class="mb-3">Chọn ghế</h1>
+
+<div class="mb-4">
+    <h2 class="h4">@Model.MovieTitle</h2>
+
+    <p class="mb-1">
+        Phòng: <strong>@Model.RoomName</strong>
+    </p>
+
+    <p class="mb-1">
+        Suất chiếu:
+        <strong>
+            @Model.StartTime.ToString("HH:mm dd/MM/yyyy")
+        </strong>
+    </p>
+
+    <p>
+        Giá mỗi ghế:
+        <strong>@Model.BasePrice.ToString("N0", vi) đ</strong>
+    </p>
+</div>
+
+@if (TempData["BookingError"] is string error)
+{
+    <div class="alert alert-danger" role="alert">
+        @error
+    </div>
+}
+
+<div class="alert alert-info">
+    Chọn tối đa 10 ghế. Ghế chỉ được đặt sau khi xác nhận thành công.
+    Thanh toán tại quầy.
+</div>
+
+@if (!hasAvailableSeats)
+{
+    <div class="alert alert-warning">
+        Suất chiếu hiện không còn ghế có thể đặt.
+    </div>
+}
+
+<form asp-controller="Bookings"
+      asp-action="Create"
+      method="post"
+      id="booking-form">
+
+    <input asp-for="ShowtimeId" type="hidden" />
+
+    <div class="border rounded bg-light text-center p-3 mb-4">
+        MÀN HÌNH
+    </div>
+
+    <div class="overflow-auto mb-4">
+        @foreach (var row in Model.Seats.GroupBy(s => s.RowLabel))
+        {
+            <div class="d-flex align-items-center gap-2 mb-2"
+                 style="min-width: max-content;">
+
+                <strong class="me-2" style="width: 35px;">
+                    @row.Key
+                </strong>
+
+                @foreach (var seat in row.OrderBy(s => s.SeatNumber))
+                {
+                    if (!seat.IsActive || seat.IsBooked)
+                    {
+                        <button type="button"
+                                class="btn btn-secondary"
+                                style="width: 62px;"
+                                disabled
+                                title="@(seat.IsBooked
+                                    ? "Đã đặt"
+                                    : "Ngừng sử dụng")">
+                            @seat.Label
+                        </button>
+                    }
+                    else
+                    {
+                        <input type="checkbox"
+                               class="btn-check seat-choice"
+                               name="SelectedSeatIds"
+                               value="@seat.SeatId"
+                               id="seat-@seat.SeatId"
+                               data-label="@seat.Label"
+                               autocomplete="off" />
+
+                        <label class="btn btn-outline-primary"
+                               style="width: 62px;"
+                               for="seat-@seat.SeatId">
+                            @seat.Label
+                        </label>
+                    }
+                }
+            </div>
+        }
+    </div>
+
+    <p class="small text-muted">
+        Viền xanh: ghế trống · Xanh đậm: đang chọn ·
+        Xám: đã đặt hoặc ngừng sử dụng
+    </p>
+
+    <div class="border rounded p-3 mb-3" aria-live="polite">
+        <p>
+            Ghế đang chọn:
+            <strong id="selected-seats">Chưa chọn</strong>
+        </p>
+
+        <p class="mb-0">
+            Tổng tiền dự kiến:
+            <strong id="total-price">0 đ</strong>
+        </p>
+    </div>
+
+    <p id="seat-error" class="text-danger" role="alert"></p>
+
+    <button type="submit"
+            id="submit-booking"
+            class="btn btn-primary"
+            disabled>
+        Xác nhận đặt vé
+    </button>
+
+    <a asp-controller="Catalog"
+       asp-action="Index"
+       class="btn btn-outline-secondary">
+        Quay lại danh sách phim
+    </a>
+</form>
+
+@section Scripts {
+    <script>
+        (() => {
+            const form = document.getElementById("booking-form");
+            const choices = [...document.querySelectorAll(".seat-choice")];
+            const selectedText = document.getElementById("selected-seats");
+            const totalText = document.getElementById("total-price");
+            const errorText = document.getElementById("seat-error");
+            const submitButton = document.getElementById("submit-booking");
+
+            const price = @Model.BasePrice.ToString(CultureInfo.InvariantCulture);
+            const formatter = new Intl.NumberFormat("vi-VN");
+            let submitting = false;
+
+            function selectedSeats() {
+                return choices.filter(input => input.checked);
+            }
+
+            function updateSummary() {
+                const selected = selectedSeats();
+
+                selectedText.textContent = selected.length
+                    ? selected.map(input => input.dataset.label).join(", ")
+                    : "Chưa chọn";
+
+                totalText.textContent =
+                    formatter.format(selected.length * price) + " đ";
+
+                submitButton.disabled =
+                    submitting || selected.length === 0 || selected.length > 10;
+            }
+
+            choices.forEach(input => {
+                input.addEventListener("change", () => {
+                    errorText.textContent = "";
+
+                    if (selectedSeats().length > 10) {
+                        input.checked = false;
+                        errorText.textContent =
+                            "Mỗi lần chỉ được đặt tối đa 10 ghế.";
+                    }
+
+                    updateSummary();
+                });
+            });
+
+            form.addEventListener("submit", event => {
+                const count = selectedSeats().length;
+
+                if (submitting || count < 1 || count > 10) {
+                    event.preventDefault();
+                    return;
+                }
+
+                submitting = true;
+                submitButton.disabled = true;
+                submitButton.textContent = "Đang xử lý...";
+            });
+
+            window.addEventListener("pageshow", () => {
+                submitting = false;
+                submitButton.textContent = "Xác nhận đặt vé";
+                updateSummary();
+            });
+
+            updateSummary();
+        })();
+    </script>
+}

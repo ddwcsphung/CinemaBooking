@@ -1,0 +1,124 @@
+﻿@model CinemaBooking.ViewModels.MovieDetailsViewModel
+@using System.Globalization
+
+@{
+    ViewData["Title"] = Model.Movie.Title;
+    var vi = CultureInfo.GetCultureInfo("vi-VN");
+}
+
+<a asp-controller="Catalog"
+   asp-action="Index"
+   class="btn btn-outline-secondary mb-4">
+    ← Danh sách phim
+</a>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        @if (!string.IsNullOrWhiteSpace(Model.Movie.PosterUrl))
+        {
+            <img src="@Model.Movie.PosterUrl"
+                 alt="Poster @Model.Movie.Title"
+                 class="img-fluid rounded shadow-sm" />
+        }
+        else
+        {
+            <div class="bg-light p-5 text-center rounded">
+                Chưa có poster
+            </div>
+        }
+    </div>
+
+    <div class="col-md-8">
+        <h1>@Model.Movie.Title</h1>
+
+        <p class="text-muted">
+            @string.Join(", ", Model.Movie.Genres.Select(g => g.Name))
+        </p>
+
+        <p>
+            <strong>Thời lượng:</strong>
+            @Model.Movie.DurationMinutes phút
+        </p>
+
+        <p>
+            <strong>Ngày khởi chiếu:</strong>
+            @Model.Movie.ReleaseDate.ToString("dd/MM/yyyy")
+        </p>
+
+        <h2 class="h5 mt-4">Nội dung phim</h2>
+
+        <p style="white-space: pre-line;">@Model.Movie.Description</p>
+    </div>
+</div>
+
+<hr class="my-4" />
+
+<h2 class="h4">Lịch chiếu</h2>
+
+<form asp-controller="Catalog"
+      asp-action="Details"
+      asp-route-id="@Model.Movie.Id"
+      method="get"
+      class="row g-3 align-items-end mb-4">
+
+    <div class="col-sm-6 col-md-4">
+        <label for="date" class="form-label">Ngày xem</label>
+
+        <input id="date"
+               name="date"
+               type="date"
+               value="@Model.SelectedDate.ToString("yyyy-MM-dd")"
+               class="form-control"
+               required />
+    </div>
+
+    <div class="col-sm-auto">
+        <button type="submit" class="btn btn-primary">
+            Xem lịch chiếu
+        </button>
+    </div>
+</form>
+
+@if (Model.Showtimes.Count == 0)
+{
+    <div class="alert alert-info">
+        Không có suất chiếu còn mở bán trong ngày
+        @Model.SelectedDate.ToString("dd/MM/yyyy").
+    </div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-3 g-3">
+        @foreach (var showtime in Model.Showtimes)
+        {
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="h5">
+                            @showtime.StartTime.ToString("HH:mm")
+                            –
+                            @showtime.EndTime.ToString("HH:mm")
+                        </h3>
+
+                        <p class="mb-2">
+                            Phòng: @showtime.Room.Name
+                        </p>
+
+                        <p class="mb-0">
+                            Giá vé:
+                            <strong>
+                                @showtime.BasePrice.ToString("N0", vi) đ
+                            </strong>
+                        </p>
+                        <a asp-controller="Bookings"
+                           asp-action="Create"
+                           asp-route-showtimeId="@showtime.Id"
+                           class="btn btn-primary mt-3">
+                            Chọn ghế
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

@@ -8,7 +8,7 @@ namespace CinemaBooking.Controllers
     {
         public IActionResult Index()
         {
-            return View();
+            return RedirectToAction("Index", "Catalog");
         }
 
         public IActionResult Privacy()
