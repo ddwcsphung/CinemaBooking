@@ -239,6 +239,48 @@ public class BookingsController : Controller
         }
     }
 
+    // GET: /Bookings
+    public async Task<IActionResult> Index(int page = 1)
+    {
+        const int pageSize = 10;
+
+        var userId = _userManager.GetUserId(User);
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Challenge();
+        }
+
+        // Chỉ lấy các đơn của người đang đăng nhập.
+        var query = _context.Bookings
+            .AsNoTracking()
+            .Where(b => b.UserId == userId);
+
+        var totalItems = await query.CountAsync();
+
+        var totalPages = Math.Max(
+            1,
+            (int)Math.Ceiling(totalItems / (double)pageSize));
+
+        page = Math.Clamp(page, 1, totalPages);
+
+        var bookings = await query
+            .Include(b => b.Showtime)
+                .ThenInclude(s => s.Movie)
+            .Include(b => b.Showtime)
+                .ThenInclude(s => s.Room)
+            .OrderByDescending(b => b.CreatedAtUtc)
+            .ThenByDescending(b => b.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+
+        return View(bookings);
+    }
+
     // GET: /Bookings/Details/5
     public async Task<IActionResult> Details(int id)
     {
