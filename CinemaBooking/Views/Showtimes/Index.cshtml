@@ -1,0 +1,97 @@
+﻿@model IEnumerable<CinemaBooking.Models.Showtime>
+
+@{
+    ViewData["Title"] = "Quản lý suất chiếu";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (TempData["ShowtimeMessage"] is string message)
+{
+    <div class="alert alert-success">@message</div>
+}
+
+@if (TempData["ShowtimeError"] is string error)
+{
+    <div class="alert alert-danger">
+        @error
+    </div>
+}
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">
+        Thêm suất chiếu
+    </a>
+</p>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Chưa có suất chiếu nào.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Phim</th>
+                    <th>Phòng</th>
+                    <th>Bắt đầu</th>
+                    <th>Kết thúc</th>
+                    <th>Giá vé</th>
+                    <th>Mở bán</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var showtime in Model)
+                {
+                    <tr>
+                        <td>@showtime.Movie.Title</td>
+                        <td>@showtime.Room.Name</td>
+                        <td>
+                            @showtime.StartTime.ToString("dd/MM/yyyy HH:mm")
+                        </td>
+                        <td>
+                            @showtime.EndTime.ToString("dd/MM/yyyy HH:mm")
+                        </td>
+                        <td>
+                            @showtime.BasePrice.ToString(
+                                "N0",
+                                System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))
+                            đ
+                        </td>
+                        <td>@(showtime.IsActive ? "Có" : "Không")</td>
+                        <td>
+    <div class="d-flex flex-wrap gap-2">
+        <form asp-controller="Showtimes"
+              asp-action="ToggleSale"
+              asp-route-id="@showtime.Id"
+              method="post">
+
+            <button type="submit"
+                    class="btn btn-sm @(showtime.IsActive
+                        ? "btn-warning"
+                        : "btn-success")">
+                @(showtime.IsActive ? "Đóng bán" : "Mở bán")
+            </button>
+        </form>
+
+        <form asp-controller="Showtimes"
+              asp-action="Delete"
+              asp-route-id="@showtime.Id"
+              method="post"
+              onsubmit="return confirm('Bạn có chắc muốn xóa suất chiếu này?');">
+
+            <button type="submit" class="btn btn-sm btn-danger">
+                Xóa
+            </button>
+        </form>
+    </div>
+</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

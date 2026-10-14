@@ -1,0 +1,115 @@
+@model CinemaBooking.Models.Movie
+
+@{
+    ViewData["Title"] = "Sửa phim";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<div class="row">
+    <div class="col-md-8 col-lg-6">
+        <form asp-action="Edit"
+              asp-route-id="@Model.Id"
+              method="post">
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3"></div>
+
+            <input type="hidden" asp-for="Id" />
+
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description"
+                          class="form-control"
+                          rows="5"></textarea>
+                <span asp-validation-for="Description"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="DurationMinutes" class="form-label"></label>
+                <input asp-for="DurationMinutes"
+                       class="form-control"
+                       type="number"
+                       min="1"
+                       max="600" />
+                <span asp-validation-for="DurationMinutes"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ReleaseDate" class="form-label"></label>
+                <input asp-for="ReleaseDate"
+                       class="form-control"
+                       type="date" />
+                <span asp-validation-for="ReleaseDate"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="PosterUrl" class="form-label"></label>
+                <input asp-for="PosterUrl"
+                       class="form-control"
+                       placeholder="/images/posters/ten-phim.jpg" />
+                <span asp-validation-for="PosterUrl"
+                      class="text-danger"></span>
+                <div class="form-text">
+                    Nhập đường dẫn ảnh poster. Có thể để trống.
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="selectedGenreIds" class="form-label">
+                    Thể loại
+                </label>
+
+                <select id="selectedGenreIds"
+                        name="selectedGenreIds"
+                        asp-items="ViewBag.GenreOptions"
+                        class="form-select"
+                        multiple
+                        size="6">
+                </select>
+
+                <div class="form-text">
+                    Các thể loại đã lưu được chọn sẵn.
+                    Giữ Ctrl và nhấp chuột để chọn hoặc bỏ chọn.
+                </div>
+
+                @Html.ValidationMessage(
+                    "selectedGenreIds",
+                    null,
+                    new { @class = "text-danger" })
+            </div>
+
+            <div class="form-check mb-3">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label asp-for="IsActive" class="form-check-label"></label>
+                <span asp-validation-for="IsActive"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">
+                    Lưu thay đổi
+                </button>
+
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    Quay lại
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

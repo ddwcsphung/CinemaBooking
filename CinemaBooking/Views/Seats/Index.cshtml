@@ -1,0 +1,74 @@
+﻿@model CinemaBooking.Models.Room
+
+@{
+    ViewData["Title"] = "Ghế của phòng";
+}
+
+<h1>Ghế của @Model.Name</h1>
+
+<p>
+    Tổng số ghế: <strong>@Model.Seats.Count</strong>
+    — Đang sử dụng:
+    <strong>@Model.Seats.Count(s => s.IsActive)</strong>
+</p>
+
+@if (TempData["SeatMessage"] is string message)
+{
+    <div class="alert alert-info">
+        @message
+    </div>
+}
+
+<div class="mb-3">
+    @if (!Model.Seats.Any())
+    {
+        <a asp-action="Generate"
+           asp-route-roomId="@Model.Id"
+           class="btn btn-primary">
+            Tạo ghế tự động
+        </a>
+    }
+
+    <a asp-controller="Rooms"
+       asp-action="Index"
+       class="btn btn-outline-secondary">
+        Quay lại danh sách phòng
+    </a>
+</div>
+
+@if (!Model.Seats.Any())
+{
+    <p class="text-muted">Phòng này chưa có ghế.</p>
+}
+else
+{
+    <div class="border rounded p-3">
+        <div class="bg-light border rounded text-center p-3 mb-4">
+            MÀN CHIẾU
+        </div>
+
+        <div class="overflow-auto">
+            @foreach (var row in Model.Seats
+                .GroupBy(s => s.RowLabel)
+                .OrderBy(g => g.Key))
+            {
+                <div class="d-flex flex-nowrap align-items-center gap-2 mb-2">
+                    <strong class="me-2">Hàng @row.Key</strong>
+
+                    @foreach (var seat in row.OrderBy(s => s.SeatNumber))
+                    {
+                        <span class="badge flex-shrink-0 p-3
+                                     @(seat.IsActive ? "bg-success" : "bg-secondary")">
+                            @(seat.RowLabel + seat.SeatNumber)
+                        </span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <p class="text-muted mt-3">
+        Xanh: đang sử dụng. Xám: ngừng sử dụng.
+        Đây là sơ đồ quản lý ghế, chưa thể hiện trạng thái bán vé.
+    </p>
+}

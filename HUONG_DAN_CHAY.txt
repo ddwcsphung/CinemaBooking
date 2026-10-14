@@ -1,0 +1,24 @@
+HƯỚNG DẪN CHẠY CINEMABOOKING CHO THÀNH VIÊN NHÓM
+
+1. Cài .NET 10 SDK, Visual Studio hỗ trợ .NET 10 với workload ASP.NET and web development, SQL Server Express LocalDB.
+2. Clone repository, mở CinemaBooking.slnx, khôi phục NuGet và Build.
+3. Mở Tools > NuGet Package Manager > Package Manager Console. Chọn Default project CinemaBooking và chạy Update-Database. Không tạo migration mới chỉ để cài dự án.
+4. Chạy website bằng profile Development và đăng ký tài khoản của bạn.
+5. Dừng website. Nhấp phải project CinemaBooking > Manage User Secrets. Thêm vào đối tượng JSON hiện có:
+   "SeedAdmin": { "Email": "EMAIL_BAN_VUA_DANG_KY" }
+   Nếu tệp trống, dùng: { "SeedAdmin": { "Email": "EMAIL_BAN_VUA_DANG_KY" } }
+6. Chạy lại website, đăng xuất rồi đăng nhập lại. Tài khoản được chỉ định sẽ có quyền Admin trên database của máy bạn.
+
+LƯU Ý
+- Khi không cấu hình SeedAdmin:Email hoặc tài khoản chưa tồn tại, ứng dụng bỏ qua việc gán Admin; vẫn cần tạo database ở bước 3.
+- Seeder chỉ chạy trong Development theo Program.cs. Không dùng cơ chế này làm trang cấp quyền công khai.
+- Đổi email cấu hình không thu hồi quyền Admin đã cấp cho tài khoản cũ.
+- User Secrets lưu ngoài repository. Không đưa mật khẩu hoặc token vào mã nguồn.
+- Mỗi máy dùng database LocalDB riêng. GitHub không đồng bộ tài khoản, phim, phòng hoặc vé trong database.
+- Các bảng được dựng từ migration; dữ liệu nghiệp vụ mẫu cần nhập riêng.
+- Giữ thư mục Migrations và ModelSnapshot trong Git; bỏ qua .vs, bin, obj và tệp database.
+
+LÀM VIỆC NHÓM
+- Pull nhánh main trước khi tạo nhánh chức năng.
+- Mỗi chức năng làm trên một branch riêng; commit và push rồi tạo pull request để bạn khác xem trước khi merge.
+- Thống nhất thay đổi Model và migration trước khi làm; sau khi pull migration mới, chạy Update-Database.

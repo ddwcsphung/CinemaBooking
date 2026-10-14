@@ -1,0 +1,66 @@
+@model IEnumerable<CinemaBooking.Models.Movie>
+
+@{
+    ViewData["Title"] = "Quản lý phim";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">
+        Thêm phim
+    </a>
+</p>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        Chưa có phim nào.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Tên phim</th>
+                    <th>Thời lượng</th>
+                    <th>Ngày khởi chiếu</th>
+                    <th>Hiển thị</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var movie in Model)
+                {
+                    <tr>
+                        <td>@movie.Title</td>
+                        <td>@movie.DurationMinutes phút</td>
+                        <td>@movie.ReleaseDate.ToString("dd/MM/yyyy")</td>
+                        <td>@(movie.IsActive ? "Có" : "Không")</td>
+                        <td>
+                            <a asp-action="Edit"
+                               asp-route-id="@movie.Id"
+                               class="btn btn-sm btn-warning">
+                                Sửa
+                            </a>
+
+                            <a asp-action="Details"
+                               asp-route-id="@movie.Id"
+                               class="btn btn-sm btn-info">
+                                Chi tiết
+                            </a>
+
+                            <a asp-action="Delete"
+                               asp-route-id="@movie.Id"
+                               class="btn btn-sm btn-danger">
+                                Xóa
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

@@ -1,0 +1,78 @@
+﻿@model CinemaBooking.ViewModels.GenerateSeatsViewModel
+
+@{
+    ViewData["Title"] = "Tạo ghế tự động";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<p>
+    Phòng chiếu: <strong>@ViewBag.RoomName</strong>
+</p>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-controller="Seats"
+              asp-action="Generate"
+              method="post">
+
+            <div asp-validation-summary="All"
+                 class="text-danger mb-3"></div>
+
+            <input type="hidden" asp-for="RoomId" />
+
+            <div class="mb-3">
+                <label asp-for="RowCount" class="form-label"></label>
+
+                <input asp-for="RowCount"
+                       class="form-control"
+                       type="number"
+                       min="1"
+                       max="26" />
+
+                <span asp-validation-for="RowCount"
+                      class="text-danger"></span>
+
+                <div class="form-text">
+                    Các hàng được đặt tên lần lượt từ A đến Z.
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="SeatsPerRow"
+                       class="form-label"></label>
+
+                <input asp-for="SeatsPerRow"
+                       class="form-control"
+                       type="number"
+                       min="1"
+                       max="30" />
+
+                <span asp-validation-for="SeatsPerRow"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="alert alert-info">
+                Ví dụ: 5 hàng × 8 ghế tạo ra 40 ghế,
+                từ A1–A8 đến E1–E8.
+                Chức năng này chỉ dùng khi phòng chưa có ghế.
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                Tạo ghế
+            </button>
+
+            <a asp-action="Index"
+               asp-route-roomId="@Model.RoomId"
+               class="btn btn-outline-secondary">
+                Quay lại
+            </a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

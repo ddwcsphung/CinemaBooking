@@ -1,0 +1,38 @@
+@model CinemaBooking.Models.Room
+
+@{
+    ViewData["Title"] = "Xóa phòng chiếu";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<p>Bạn có chắc muốn xóa phòng này không?</p>
+
+<div asp-validation-summary="All"
+     class="text-danger mb-3"></div>
+
+<dl class="row">
+    <dt class="col-sm-3">Tên phòng</dt>
+    <dd class="col-sm-9">@Model.Name</dd>
+
+    <dt class="col-sm-3">Trạng thái</dt>
+    <dd class="col-sm-9">
+        @(Model.IsActive ? "Đang hoạt động" : "Ngừng hoạt động")
+    </dd>
+</dl>
+
+<form asp-controller="Rooms"
+      asp-action="Delete"
+      asp-route-id="@Model.Id"
+      method="post">
+
+    <input type="hidden" asp-for="Id" />
+
+    <button type="submit" class="btn btn-danger">
+        Xác nhận xóa
+    </button>
+
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        Hủy
+    </a>
+</form>
