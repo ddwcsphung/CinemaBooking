@@ -21,6 +21,7 @@ namespace CinemaBooking.Controllers
         {
             var rooms = await _context.Rooms
                 .AsNoTracking()
+                .Include(r => r.Seats)
                 .OrderBy(r => r.Name)
                 .ToListAsync();
 

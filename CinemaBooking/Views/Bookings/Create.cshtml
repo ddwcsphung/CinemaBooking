@@ -26,7 +26,7 @@
 
     <p>
         Giá mỗi ghế:
-        <strong>@Model.BasePrice.ToString("N0", vi) đ</strong>
+        <strong id="unit-price">@Model.BasePrice.ToString("N0", vi) đ</strong>
     </p>
 </div>
 
@@ -42,17 +42,23 @@
     Thanh toán tại quầy.
 </div>
 
-@if (!hasAvailableSeats)
-{
-    <div class="alert alert-warning">
-        Suất chiếu hiện không còn ghế có thể đặt.
-    </div>
-}
+<div id="availability-message"
+     class="alert alert-warning @(hasAvailableSeats ? "d-none" : "")"
+     role="status">
+    Suất chiếu hiện không còn ghế có thể đặt.
+</div>
+
+<p id="seat-sync-status"
+   class="text-muted small"
+   role="status">
+    Đang kiểm tra trạng thái ghế...
+</p>
 
 <form asp-controller="Bookings"
       asp-action="Create"
       method="post"
-      id="booking-form">
+      id="booking-form"
+      data-seats-url="@Url.Content($"~/api/showtimes/{Model.ShowtimeId}/seats")">
 
     <input asp-for="ShowtimeId" type="hidden" />
 
@@ -70,36 +76,32 @@
                     @row.Key
                 </strong>
 
-                @foreach (var seat in row.OrderBy(s => s.SeatNumber))
-                {
-                    if (!seat.IsActive || seat.IsBooked)
-                    {
-                        <button type="button"
-                                class="btn btn-secondary"
-                                style="width: 62px;"
-                                disabled
-                                title="@(seat.IsBooked
-                                    ? "Đã đặt"
-                                    : "Ngừng sử dụng")">
-                            @seat.Label
-                        </button>
-                    }
-                    else
-                    {
-                        <input type="checkbox"
-                               class="btn-check seat-choice"
-                               name="SelectedSeatIds"
-                               value="@seat.SeatId"
-                               id="seat-@seat.SeatId"
-                               data-label="@seat.Label"
-                               autocomplete="off" />
+               @foreach (var seat in row.OrderBy(s => s.SeatNumber))
+               {
+                    var unavailable = !seat.IsActive || seat.IsBooked;
+                    var status = seat.IsBooked
+                        ? "Đã đặt"
+                        : !seat.IsActive
+                            ? "Ngừng sử dụng"
+                            : "Ghế trống";
 
-                        <label class="btn btn-outline-primary"
-                               style="width: 62px;"
-                               for="seat-@seat.SeatId">
-                            @seat.Label
-                        </label>
-                    }
+                    <input type="checkbox"
+                           class="btn-check seat-choice"
+                           name="SelectedSeatIds"
+                           value="@seat.SeatId"
+                           id="seat-@seat.SeatId"
+                           data-label="@seat.Label"
+                           autocomplete="off"
+                           disabled="@unavailable" />
+
+                    <label class="btn @(unavailable
+                                       ? "btn-secondary"
+                                       : "btn-outline-primary")"
+                           style="width: 62px;"
+                           for="seat-@seat.SeatId"
+                           title="@status">
+                        @seat.Label
+                    </label>
                 }
             </div>
         }
@@ -139,71 +141,6 @@
 </form>
 
 @section Scripts {
-    <script>
-        (() => {
-            const form = document.getElementById("booking-form");
-            const choices = [...document.querySelectorAll(".seat-choice")];
-            const selectedText = document.getElementById("selected-seats");
-            const totalText = document.getElementById("total-price");
-            const errorText = document.getElementById("seat-error");
-            const submitButton = document.getElementById("submit-booking");
-
-            const price = @Model.BasePrice.ToString(CultureInfo.InvariantCulture);
-            const formatter = new Intl.NumberFormat("vi-VN");
-            let submitting = false;
-
-            function selectedSeats() {
-                return choices.filter(input => input.checked);
-            }
-
-            function updateSummary() {
-                const selected = selectedSeats();
-
-                selectedText.textContent = selected.length
-                    ? selected.map(input => input.dataset.label).join(", ")
-                    : "Chưa chọn";
-
-                totalText.textContent =
-                    formatter.format(selected.length * price) + " đ";
-
-                submitButton.disabled =
-                    submitting || selected.length === 0 || selected.length > 10;
-            }
-
-            choices.forEach(input => {
-                input.addEventListener("change", () => {
-                    errorText.textContent = "";
-
-                    if (selectedSeats().length > 10) {
-                        input.checked = false;
-                        errorText.textContent =
-                            "Mỗi lần chỉ được đặt tối đa 10 ghế.";
-                    }
-
-                    updateSummary();
-                });
-            });
-
-            form.addEventListener("submit", event => {
-                const count = selectedSeats().length;
-
-                if (submitting || count < 1 || count > 10) {
-                    event.preventDefault();
-                    return;
-                }
-
-                submitting = true;
-                submitButton.disabled = true;
-                submitButton.textContent = "Đang xử lý...";
-            });
-
-            window.addEventListener("pageshow", () => {
-                submitting = false;
-                submitButton.textContent = "Xác nhận đặt vé";
-                updateSummary();
-            });
-
-            updateSummary();
-        })();
-    </script>
+    <script src="~/js/booking-seats.js"
+            asp-append-version="true"></script>
 }

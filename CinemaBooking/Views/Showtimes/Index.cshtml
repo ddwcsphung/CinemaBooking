@@ -64,6 +64,12 @@ else
                         <td>@(showtime.IsActive ? "Có" : "Không")</td>
                         <td>
     <div class="d-flex flex-wrap gap-2">
+        <a asp-controller="Showtimes"
+           asp-action="Edit"
+           asp-route-id="@showtime.Id"
+           class="btn btn-sm btn-outline-primary">
+            Sửa
+        </a>
         <form asp-controller="Showtimes"
               asp-action="ToggleSale"
               asp-route-id="@showtime.Id"
