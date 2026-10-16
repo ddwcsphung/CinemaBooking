@@ -1,38 +1,129 @@
 @model CinemaBooking.Models.Room
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Chi tiết phòng chiếu";
+
+    var totalSeats = Model.Seats.Count;
+    var activeSeats = Model.Seats.Count(s => s.IsActive);
+    var inactiveSeats = totalSeats - activeSeats;
+
+    var rows = Model.Seats
+        .GroupBy(s => s.RowLabel)
+        .OrderBy(g => g.Key);
 }
 
-<h1>Details</h1>
+<h1 class="mb-4">Chi tiết phòng chiếu</h1>
 
-<div>
-    <h4>Room</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-    </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IsActive)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IsActive)
-        </dd>
-    </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Seats)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Seats)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+<dl class="row">
+    <dt class="col-sm-3">Tên phòng</dt>
+    <dd class="col-sm-9">@Model.Name</dd>
+
+    <dt class="col-sm-3">Trạng thái phòng</dt>
+    <dd class="col-sm-9">
+        @if (Model.IsActive)
+        {
+            <span class="badge bg-success">
+                Đang hoạt động
+            </span>
+        }
+        else
+        {
+            <span class="badge bg-secondary">
+                Ngừng hoạt động
+            </span>
+        }
+    </dd>
+
+    <dt class="col-sm-3">Tổng số ghế</dt>
+    <dd class="col-sm-9">@totalSeats ghế</dd>
+
+    <dt class="col-sm-3">Ghế đang sử dụng</dt>
+    <dd class="col-sm-9">@activeSeats ghế</dd>
+
+    <dt class="col-sm-3">Ghế ngừng sử dụng</dt>
+    <dd class="col-sm-9">@inactiveSeats ghế</dd>
+</dl>
+
+<h2 class="h5 mt-4 mb-3">Ghế trong phòng</h2>
+
+@if (totalSeats == 0)
+{
+    <div class="alert alert-info">
+        Phòng chưa có ghế. Bạn có thể tạo ghế bằng nút bên dưới.
+    </div>
+}
+else
+{
+    <p class="text-muted">
+        Trạng thái dưới đây là trạng thái sử dụng của ghế,
+        không phải tình trạng đặt vé của một suất chiếu.
+    </p>
+
+    <div class="border rounded bg-light text-center p-3 mb-3">
+        MÀN HÌNH
+    </div>
+
+    <div class="overflow-auto">
+        @foreach (var row in rows)
+        {
+            <div class="d-flex align-items-center gap-2 mb-2"
+                 style="min-width: max-content;">
+
+                <strong class="me-2" style="min-width: 60px;">
+                    Hàng @row.Key
+                </strong>
+
+                @foreach (var seat in row.OrderBy(s => s.SeatNumber))
+                {
+                    <span class="badge @(seat.IsActive
+                                                              ? "bg-success"
+                                                              : "bg-secondary") p-3"
+                          style="min-width: 60px;"
+                          title="@(seat.IsActive
+                                                      ? "Đang sử dụng"
+                                                      : "Ngừng sử dụng")">
+                        @($"{seat.RowLabel}{seat.SeatNumber}")
+                    </span>
+                }
+            </div>
+        }
+    </div>
+
+    <p class="small text-muted mt-3">
+        Xanh: đang sử dụng · Xám: ngừng sử dụng
+    </p>
+}
+
+<div class="d-flex flex-wrap gap-2 mt-4">
+    <a asp-controller="Rooms"
+       asp-action="Edit"
+       asp-route-id="@Model.Id"
+       class="btn btn-primary">
+        Sửa phòng
+    </a>
+
+    @if (totalSeats == 0)
+    {
+        <a asp-controller="Seats"
+           asp-action="Generate"
+           asp-route-roomId="@Model.Id"
+           class="btn btn-outline-primary">
+            Tạo ghế
+        </a>
+    }
+    else
+    {
+        <a asp-controller="Seats"
+           asp-action="Index"
+           asp-route-roomId="@Model.Id"
+           class="btn btn-outline-primary">
+            Quản lý ghế
+        </a>
+    }
+
+    <a asp-controller="Rooms"
+       asp-action="Index"
+       class="btn btn-outline-secondary">
+        Quay lại danh sách
+    </a>
 </div>

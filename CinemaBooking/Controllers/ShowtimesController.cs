@@ -53,12 +53,26 @@ public class ShowtimesController : Controller
     public async Task<IActionResult> Create(
         ShowtimeCreateViewModel model)
     {
-        if (model.StartTime.HasValue &&
-            model.StartTime.Value <= CinemaNow)
+        if (model.StartTime.HasValue)
         {
-            ModelState.AddModelError(
-                nameof(model.StartTime),
-                "Giờ bắt đầu phải nằm trong tương lai.");
+            var startTime = model.StartTime.Value;
+
+
+            if (startTime <= CinemaNow)
+            {
+                ModelState.AddModelError(
+                    nameof(model.StartTime),
+                    "Giờ bắt đầu phải nằm trong tương lai.");
+            }
+
+            // Chừa khoảng thời gian để cộng thời lượng phim
+            // và 15 phút dọn phòng mà không vượt giới hạn DateTime.
+            if (startTime >= new DateTime(9999, 12, 31))
+            {
+                ModelState.AddModelError(
+                    nameof(model.StartTime),
+                    "Ngày chiếu nằm ngoài phạm vi được hỗ trợ.");
+            }
         }
 
         if (!ModelState.IsValid)
@@ -106,6 +120,15 @@ public class ShowtimesController : Controller
             if (movie != null)
             {
                 var startTime = model.StartTime!.Value;
+
+                if (startTime.Date < movie.ReleaseDate.Date)
+                {
+                    ModelState.AddModelError(
+                        nameof(model.StartTime),
+                        $"Ngày chiếu phải từ ngày khởi chiếu " +
+                        $"{movie.ReleaseDate:dd/MM/yyyy} trở đi.");
+                }
+
                 var endTime =
                     startTime.AddMinutes(movie.DurationMinutes);
 
@@ -124,6 +147,14 @@ public class ShowtimesController : Controller
                         nameof(model.StartTime),
                         "Phòng đã có lịch trong khoảng thời gian này. "
                         + "Cần chừa 15 phút dọn phòng giữa hai suất.");
+                }
+
+                if (startTime <= CinemaNow)
+                {
+                    ModelState.AddModelError(
+                        nameof(model.StartTime),
+                        "Giờ bắt đầu đã qua trong lúc xử lý. " +
+                        "Vui lòng chọn giờ khác.");
                 }
 
                 if (ModelState.IsValid)
@@ -255,6 +286,19 @@ public class ShowtimesController : Controller
             return RedirectToAction(nameof(Index));
         }
 
+        var hasBookings = await _context.Bookings
+    .AnyAsync(b => b.ShowtimeId == id);
+
+        if (hasBookings)
+        {
+            TempData["ShowtimeError"] =
+                "Không thể xóa suất chiếu đã có đơn đặt vé, " +
+                "kể cả đơn chưa thanh toán. " +
+                "Bạn có thể đóng bán để ngừng nhận thêm đơn.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
         try
         {
             _context.Showtimes.Remove(showtime);
@@ -272,6 +316,212 @@ public class ShowtimesController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // GET: /Showtimes/Edit/5
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var showtime = await _context.Showtimes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == id);
+
+        if (showtime == null)
+        {
+            return NotFound();
+        }
+
+        if (showtime.StartTime <= CinemaNow ||
+            await _context.Bookings.AnyAsync(b => b.ShowtimeId == id))
+        {
+            TempData["ShowtimeError"] =
+                "Chỉ được sửa suất chưa bắt đầu và chưa có đơn đặt vé.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        var model = new ShowtimeCreateViewModel
+        {
+            MovieId = showtime.MovieId,
+            RoomId = showtime.RoomId,
+            StartTime = showtime.StartTime,
+            BasePrice = showtime.BasePrice,
+            IsActive = showtime.IsActive
+        };
+
+        ViewBag.ShowtimeId = id;
+        await LoadOptionsAsync(model);
+
+        return View(model);
+    }
+
+    // POST: /Showtimes/Edit/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(
+        int id,
+        ShowtimeCreateViewModel model)
+    {
+        ViewBag.ShowtimeId = id;
+
+        if (model.StartTime.HasValue)
+        {
+            if (model.StartTime.Value <= CinemaNow)
+            {
+                ModelState.AddModelError(
+                    nameof(model.StartTime),
+                    "Giờ bắt đầu phải nằm trong tương lai.");
+            }
+
+            if (model.StartTime.Value >= new DateTime(9999, 12, 31))
+            {
+                ModelState.AddModelError(
+                    nameof(model.StartTime),
+                    "Ngày chiếu nằm ngoài phạm vi được hỗ trợ.");
+            }
+        }
+
+        if (!ModelState.IsValid)
+        {
+            await LoadOptionsAsync(model);
+            return View(model);
+        }
+
+        try
+        {
+            // Kiểm tra điều kiện và lưu trong cùng giao dịch.
+            // Đặt vé đồng thời không được làm thay đổi vé đã tạo.
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable);
+
+            var showtime = await _context.Showtimes
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (showtime == null)
+            {
+                return NotFound();
+            }
+
+            // Phải kiểm tra lại khi lưu vì có thể vừa phát sinh đơn.
+            if (showtime.StartTime <= CinemaNow ||
+                await _context.Bookings.AnyAsync(b => b.ShowtimeId == id))
+            {
+                TempData["ShowtimeError"] =
+                    "Không thể sửa vì suất đã bắt đầu hoặc đã có đơn đặt vé.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            var movie = await _context.Movies
+                .FirstOrDefaultAsync(m =>
+                    m.Id == model.MovieId && m.IsActive);
+
+            var room = await _context.Rooms
+                .FirstOrDefaultAsync(r =>
+                    r.Id == model.RoomId && r.IsActive);
+
+            if (movie == null)
+            {
+                ModelState.AddModelError(
+                    nameof(model.MovieId),
+                    "Phim không tồn tại hoặc đang bị ẩn.");
+            }
+
+            if (room == null)
+            {
+                ModelState.AddModelError(
+                    nameof(model.RoomId),
+                    "Phòng không tồn tại hoặc đã ngừng hoạt động.");
+            }
+            else if (!await _context.Seats.AnyAsync(s =>
+                         s.RoomId == room.Id && s.IsActive))
+            {
+                ModelState.AddModelError(
+                    nameof(model.RoomId),
+                    "Phòng chưa có ghế đang sử dụng.");
+            }
+
+            if (movie != null)
+            {
+                var startTime = model.StartTime!.Value;
+
+                if (startTime.Date < movie.ReleaseDate.Date)
+                {
+                    ModelState.AddModelError(
+                        nameof(model.StartTime),
+                        $"Ngày chiếu phải từ ngày khởi chiếu " +
+                        $"{movie.ReleaseDate:dd/MM/yyyy} trở đi.");
+                }
+
+                var endTime =
+                    startTime.AddMinutes(movie.DurationMinutes);
+
+                var newRoomAvailableTime =
+                    endTime.AddMinutes(CleaningMinutes);
+
+                var overlaps = await _context.Showtimes.AnyAsync(s =>
+                    s.Id != id &&
+                    s.RoomId == model.RoomId &&
+                    s.StartTime < newRoomAvailableTime &&
+                    s.EndTime.AddMinutes(CleaningMinutes) > startTime);
+
+                if (overlaps)
+                {
+                    ModelState.AddModelError(
+                        nameof(model.StartTime),
+                        "Phòng đã có lịch trong khoảng thời gian này. " +
+                        "Cần chừa 15 phút dọn phòng giữa hai suất.");
+                }
+
+                if (startTime <= CinemaNow ||
+                    showtime.StartTime <= CinemaNow)
+                {
+                    ModelState.AddModelError(
+                        nameof(model.StartTime),
+                        "Giờ bắt đầu đã qua trong lúc xử lý. " +
+                        "Vui lòng tải lại trang.");
+                }
+
+                if (ModelState.IsValid)
+                {
+                    showtime.MovieId = movie.Id;
+                    showtime.RoomId = model.RoomId;
+                    showtime.StartTime = startTime;
+                    showtime.EndTime = endTime;
+                    showtime.BasePrice = model.BasePrice!.Value;
+                    showtime.IsActive = model.IsActive;
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    TempData["ShowtimeMessage"] =
+                        "Đã cập nhật suất chiếu thành công.";
+
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+
+            // Khi ra khỏi khối try, giao dịch chưa commit sẽ được hủy.
+        }
+        catch (Exception ex)
+            when (ex.GetBaseException() is SqlException sql &&
+                  sql.Number == 1205)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "Có người đang đặt vé hoặc cập nhật lịch cùng lúc. " +
+                "Vui lòng tải lại trang và thử lại.");
+        }
+        catch (DbUpdateException)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "Không thể cập nhật suất chiếu. " +
+                "Dữ liệu có thể đã thay đổi, vui lòng tải lại trang.");
+        }
+
+        await LoadOptionsAsync(model);
+        return View(model);
+    }
     private async Task LoadOptionsAsync(
         ShowtimeCreateViewModel model)
     {

@@ -1,33 +1,63 @@
 ﻿@model CinemaBooking.Models.Room
 
 @{
-    ViewData["Title"] = "Ghế của phòng";
+    ViewData["Title"] = "Quản lý ghế";
+
+    var totalSeats = Model.Seats.Count;
+    var activeSeats = Model.Seats.Count(s => s.IsActive);
+
+    var rows = Model.Seats
+        .GroupBy(s => s.RowLabel)
+        .OrderBy(g => g.Key);
 }
 
-<h1>Ghế của @Model.Name</h1>
+<h1 class="mb-3">Ghế của @Model.Name</h1>
 
 <p>
-    Tổng số ghế: <strong>@Model.Seats.Count</strong>
-    — Đang sử dụng:
-    <strong>@Model.Seats.Count(s => s.IsActive)</strong>
+    Tổng số ghế: <strong>@totalSeats</strong>
+    — Đang sử dụng: <strong>@activeSeats</strong>
+    — Ngừng sử dụng: <strong>@(totalSeats - activeSeats)</strong>
 </p>
 
 @if (TempData["SeatMessage"] is string message)
 {
-    <div class="alert alert-info">
+    <div class="alert alert-info" role="status">
         @message
     </div>
 }
 
-<div class="mb-3">
-    @if (!Model.Seats.Any())
+@if (TempData["SeatError"] is string error)
+{
+    <div class="alert alert-danger" role="alert">
+        @error
+    </div>
+}
+
+@if (!Model.IsActive)
+{
+    <div class="alert alert-warning">
+        Phòng đang ngừng hoạt động.
+        Bật ghế không tự mở lại phòng hoặc suất chiếu.
+    </div>
+}
+
+<div class="d-flex flex-wrap gap-2 mb-4">
+    @if (totalSeats == 0)
     {
-        <a asp-action="Generate"
+        <a asp-controller="Seats"
+           asp-action="Generate"
            asp-route-roomId="@Model.Id"
            class="btn btn-primary">
             Tạo ghế tự động
         </a>
     }
+
+    <a asp-controller="Rooms"
+       asp-action="Details"
+       asp-route-id="@Model.Id"
+       class="btn btn-outline-primary">
+        Chi tiết phòng
+    </a>
 
     <a asp-controller="Rooms"
        asp-action="Index"
@@ -36,39 +66,78 @@
     </a>
 </div>
 
-@if (!Model.Seats.Any())
+@if (totalSeats == 0)
 {
-    <p class="text-muted">Phòng này chưa có ghế.</p>
+    <div class="alert alert-info">
+        Phòng chưa có ghế.
+    </div>
 }
 else
 {
+    <p class="text-muted">
+        Ghế đã có vé ở suất tương lai sẽ không được tắt.
+    </p>
+
     <div class="border rounded p-3">
         <div class="bg-light border rounded text-center p-3 mb-4">
             MÀN CHIẾU
         </div>
 
         <div class="overflow-auto">
-            @foreach (var row in Model.Seats
-                .GroupBy(s => s.RowLabel)
-                .OrderBy(g => g.Key))
+            @foreach (var row in rows)
             {
-                <div class="d-flex flex-nowrap align-items-center gap-2 mb-2">
-                    <strong class="me-2">Hàng @row.Key</strong>
+                <div class="d-flex align-items-start gap-2 mb-3"
+                     style="min-width: max-content;">
+
+                    <strong class="pt-3 me-2"
+                            style="min-width: 65px;">
+                        Hàng @row.Key
+                    </strong>
 
                     @foreach (var seat in row.OrderBy(s => s.SeatNumber))
                     {
-                        <span class="badge flex-shrink-0 p-3
-                                     @(seat.IsActive ? "bg-success" : "bg-secondary")">
-                            @(seat.RowLabel + seat.SeatNumber)
-                        </span>
+                        var label = $"{seat.RowLabel}{seat.SeatNumber}";
+
+                        <div class="border rounded p-2 text-center flex-shrink-0"
+                             style="width: 95px;">
+
+                            <div class="badge p-2 mb-2
+                                @(seat.IsActive ? "bg-success" : "bg-secondary")">
+                                @label
+                            </div>
+
+                            <div class="small mb-2">
+                                @(seat.IsActive ? "Đang dùng" : "Ngừng dùng")
+                            </div>
+
+                            <form asp-controller="Seats"
+                                  asp-action="SetActive"
+                                  method="post">
+
+                                <input type="hidden"
+                                       name="id"
+                                       value="@seat.Id" />
+
+                                <input type="hidden"
+                                       name="isActive"
+                                       value="@(seat.IsActive ? "false" : "true")" />
+
+                                <button type="submit"
+                                        class="btn btn-sm w-100
+                                    @(seat.IsActive ? "btn-outline-danger" : "btn-outline-success")"
+                                        aria-label="@(seat.IsActive ? $"Tắt ghế {label}" : $"Bật ghế {label}")">
+                                    @(seat.IsActive ? "Tắt" : "Bật")
+                                </button>
+                            </form>
+                        </div>
                     }
                 </div>
             }
         </div>
     </div>
 
-    <p class="text-muted mt-3">
+    <p class="small text-muted mt-3">
         Xanh: đang sử dụng. Xám: ngừng sử dụng.
-        Đây là sơ đồ quản lý ghế, chưa thể hiện trạng thái bán vé.
+        Đây là trạng thái ghế của phòng, không phải trạng thái bán vé.
     </p>
 }

@@ -1,6 +1,66 @@
 ﻿@{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = "Thông tin riêng tư";
 }
+
 <h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="row">
+    <div class="col-lg-8">
+        <div class="alert alert-info">
+            CinemaBooking là dự án học tập mô phỏng hệ thống
+            đặt vé xem phim. Khi thử nghiệm, hãy sử dụng dữ liệu
+            mẫu và mật khẩu riêng cho bản demo.
+        </div>
+
+        <section class="mb-4">
+            <h2 class="h4">Thông tin được sử dụng</h2>
+            <p>
+                Hệ thống lưu thông tin tài khoản đăng ký và
+                thông tin đặt vé, gồm suất chiếu, ghế đã chọn,
+                mã đặt vé, tổng tiền và trạng thái thanh toán.
+            </p>
+        </section>
+
+        <section class="mb-4">
+            <h2 class="h4">Mục đích sử dụng</h2>
+            <p>
+                Thông tin được sử dụng để đăng nhập, tạo đơn đặt vé,
+                hiển thị lịch sử vé và hỗ trợ quản trị viên
+                quản lý đơn đặt vé.
+            </p>
+        </section>
+
+        <section class="mb-4">
+            <h2 class="h4">Quyền truy cập</h2>
+            <p>
+                Người dùng đăng nhập có thể xem các đơn của mình.
+                Quản trị viên có quyền truy cập chức năng quản lý
+                đơn và xác nhận trạng thái thanh toán.
+            </p>
+        </section>
+
+        <section class="mb-4">
+            <h2 class="h4">Cookie đăng nhập</h2>
+            <p>
+                Hệ thống sử dụng cookie để duy trì trạng thái
+                đăng nhập. Khi dùng máy tính chung, hãy đăng xuất
+                sau khi sử dụng.
+            </p>
+        </section>
+
+        <section class="mb-4">
+            <h2 class="h4">Thanh toán trong bản demo</h2>
+            <p>
+                Luồng hiện tại sử dụng hình thức thanh toán tại quầy
+                và xác nhận bởi quản trị viên. Không nhập thông tin
+                thẻ ngân hàng vào bản demo.
+            </p>
+        </section>
+
+        <a asp-controller="Catalog"
+           asp-action="Index"
+           class="btn btn-outline-primary">
+            Quay lại danh sách phim
+        </a>
+    </div>
+</div>

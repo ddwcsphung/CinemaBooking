@@ -1,0 +1,99 @@
+﻿@model CinemaBooking.ViewModels.ShowtimeCreateViewModel
+
+@{
+    ViewData["Title"] = "Sửa suất chiếu";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<div class="row">
+    <div class="col-md-7">
+        <form asp-controller="Showtimes"
+      asp-action="Edit"
+      asp-route-id="@ViewBag.ShowtimeId"
+      method="post">
+
+            <div asp-validation-summary="All"
+                 class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="MovieId" class="form-label"></label>
+
+                <select asp-for="MovieId"
+                        asp-items="Model.MovieOptions"
+                        class="form-select">
+                    <option value="">-- Chọn phim --</option>
+                </select>
+
+                <span asp-validation-for="MovieId"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="RoomId" class="form-label"></label>
+
+                <select asp-for="RoomId"
+                        asp-items="Model.RoomOptions"
+                        class="form-select">
+                    <option value="">-- Chọn phòng --</option>
+                </select>
+
+                <span asp-validation-for="RoomId"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="StartTime" class="form-label"></label>
+
+                <input asp-for="StartTime"
+                       type="datetime-local"
+                       class="form-control" />
+
+                <span asp-validation-for="StartTime"
+                      class="text-danger"></span>
+
+                <div class="form-text">
+                    Nhập theo giờ Việt Nam.
+                    Giờ kết thúc được tính tự động từ thời lượng phim.
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="BasePrice" class="form-label"></label>
+
+                <input asp-for="BasePrice"
+                       type="number"
+                       min="1000"
+                       max="1000000"
+                       step="1"
+                       class="form-control" />
+
+                <span asp-validation-for="BasePrice"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="form-check mb-3">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label asp-for="IsActive" class="form-check-label"></label>
+            </div>
+
+            <p class="text-muted">
+                Mỗi phòng cần 15 phút dọn phòng sau khi phim kết thúc.
+            </p>
+
+            <button type="submit" class="btn btn-primary">
+    Lưu thay đổi
+</button>
+
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                Quay lại
+            </a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

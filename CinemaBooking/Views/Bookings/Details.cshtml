@@ -42,8 +42,7 @@
 
             <dt class="col-sm-3">Thời điểm đặt</dt>
             <dd class="col-sm-9">
-                @Model.CreatedAtUtc.ToOffset(TimeSpan.FromHours(7))
-                    .ToString("HH:mm dd/MM/yyyy")
+                @(Model.CreatedAtUtc.ToOffset(TimeSpan.FromHours(7)).ToString("HH:mm dd/MM/yyyy"))
             </dd>
 
             <dt class="col-sm-3">Tổng tiền</dt>

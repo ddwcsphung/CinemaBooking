@@ -1,34 +1,43 @@
 @model CinemaBooking.Models.Genre
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Xóa thể loại";
 }
 
-<h1>Delete</h1>
+<h1 class="mb-3">Xóa thể loại</h1>
 
-<h3>Are you sure you want to delete this?</h3>
-<div>
-    <h4>CinemaBooking.Models.Genre</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-    </dl>
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Movies)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Movies)
-        </dd>
-    </dl>
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="Id" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
-    </form>
-</div>
+<div asp-validation-summary="All"
+     class="text-danger mb-3"
+     role="alert"></div>
+
+<p>
+    Bạn có chắc muốn xóa thể loại
+    <strong>@Model.Name</strong> không?
+</p>
+
+<p class="text-muted">
+    Chỉ xóa được thể loại không còn được phim nào sử dụng.
+</p>
+
+<form asp-action="Delete"
+      asp-route-id="@Model.Id"
+      method="post"
+      class="d-flex flex-wrap gap-2">
+
+    <input asp-for="Id" type="hidden" />
+
+    <button type="submit" class="btn btn-danger">
+        Xác nhận xóa
+    </button>
+
+    <a asp-controller="Movies"
+       asp-action="Index"
+       class="btn btn-outline-primary">
+        Quản lý phim
+    </a>
+
+    <a asp-action="Index"
+       class="btn btn-outline-secondary">
+        Quay lại
+    </a>
+</form>

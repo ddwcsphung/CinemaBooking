@@ -1,4 +1,6 @@
-﻿using CinemaBooking.Data;
+﻿using System.Data;
+using Microsoft.Data.SqlClient;
+using CinemaBooking.Data;
 using CinemaBooking.Models;
 using CinemaBooking.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -31,6 +33,107 @@ public class SeatsController : Controller
         }
 
         return View(room);
+    }
+
+    // POST: Seats/SetActive
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetActive(int id, bool? isActive)
+    {
+        if (id <= 0 || !isActive.HasValue)
+        {
+            return BadRequest("Thông tin cập nhật ghế không hợp lệ.");
+        }
+
+        int? roomId = null;
+
+        try
+        {
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable);
+
+            var seat = await _context.Seats
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (seat == null)
+            {
+                return NotFound();
+            }
+
+            roomId = seat.RoomId;
+
+            // Nếu trạng thái đã đúng thì không thay đổi nữa.
+            if (seat.IsActive == isActive.Value)
+            {
+                TempData["SeatMessage"] =
+                    "Ghế đã ở trạng thái được yêu cầu.";
+
+                return RedirectToAction(
+                    nameof(Index),
+                    new { roomId = seat.RoomId });
+            }
+
+            // Kiểm tra vé trước khi tắt ghế.
+            if (!isActive.Value)
+            {
+                var now = DateTimeOffset.UtcNow
+                    .ToOffset(TimeSpan.FromHours(7))
+                    .DateTime;
+
+                var hasFutureBooking = await _context.BookingSeats
+                    .AnyAsync(bs =>
+                        bs.SeatId == seat.Id &&
+                        bs.Booking.Showtime.StartTime > now);
+
+                if (hasFutureBooking)
+                {
+                    TempData["SeatError"] =
+                        $"Không thể tắt ghế {seat.RowLabel}{seat.SeatNumber} "
+                        + "vì đã có vé ở suất chiếu trong tương lai.";
+
+                    return RedirectToAction(
+                        nameof(Index),
+                        new { roomId = seat.RoomId });
+                }
+            }
+
+            seat.IsActive = isActive.Value;
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            TempData["SeatMessage"] = seat.IsActive
+                ? $"Đã bật ghế {seat.RowLabel}{seat.SeatNumber}."
+                : $"Đã tắt ghế {seat.RowLabel}{seat.SeatNumber}.";
+
+            return RedirectToAction(
+                nameof(Index),
+                new { roomId = seat.RoomId });
+        }
+        catch (Exception ex)
+            when (ex.GetBaseException() is SqlException sql &&
+                  sql.Number == 1205)
+        {
+            TempData["SeatError"] =
+                "Có người đang đặt vé hoặc cập nhật ghế cùng lúc. "
+                + "Vui lòng tải lại trang và thử lại.";
+        }
+        catch (DbUpdateException)
+        {
+            TempData["SeatError"] =
+                "Không thể cập nhật ghế. "
+                + "Dữ liệu có thể đã thay đổi. Vui lòng thử lại.";
+        }
+
+        if (roomId.HasValue)
+        {
+            return RedirectToAction(
+                nameof(Index),
+                new { roomId = roomId.Value });
+        }
+
+        return RedirectToAction("Index", "Rooms");
     }
 
     // GET: Seats/Generate?roomId=1

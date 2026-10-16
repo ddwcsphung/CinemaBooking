@@ -21,6 +21,7 @@ namespace CinemaBooking.Controllers
         {
             var rooms = await _context.Rooms
                 .AsNoTracking()
+                .Include(r => r.Seats)
                 .OrderBy(r => r.Name)
                 .ToListAsync();
 
@@ -37,7 +38,8 @@ namespace CinemaBooking.Controllers
 
             var room = await _context.Rooms
                 .AsNoTracking()
-                .FirstOrDefaultAsync(r => r.Id == id);
+                .Include(r => r.Seats)
+                .FirstOrDefaultAsync(r => r.Id == id.Value);
 
             if (room == null)
             {
