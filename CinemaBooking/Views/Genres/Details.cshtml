@@ -1,31 +1,92 @@
 @model CinemaBooking.Models.Genre
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Chi tiết thể loại";
+
+    var movies = Model.Movies
+        .OrderBy(m => m.Title)
+        .ToList();
 }
 
-<h1>Details</h1>
+<h1 class="mb-4">Chi tiết thể loại</h1>
 
-<div>
-    <h4>Genre</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-    </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Movies)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Movies)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+<dl class="row">
+    <dt class="col-sm-3">Tên thể loại</dt>
+    <dd class="col-sm-9">@Model.Name</dd>
+
+    <dt class="col-sm-3">Số phim</dt>
+    <dd class="col-sm-9">@movies.Count phim</dd>
+</dl>
+
+<h2 class="h5 mt-4 mb-3">Phim thuộc thể loại</h2>
+
+@if (movies.Count == 0)
+{
+    <div class="alert alert-info">
+        Chưa có phim nào sử dụng thể loại này.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Tên phim</th>
+                    <th scope="col">Thời lượng</th>
+                    <th scope="col">Trạng thái</th>
+                    <th scope="col">Thao tác</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var movie in movies)
+                {
+                    <tr>
+                        <td>@movie.Title</td>
+                        <td>@movie.DurationMinutes phút</td>
+
+                        <td>
+                            @if (movie.IsActive)
+                            {
+                                <span class="badge bg-success">
+                                    Đang hiển thị
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">
+                                    Đang ẩn
+                                </span>
+                            }
+                        </td>
+
+                        <td>
+                            <a asp-controller="Movies"
+                               asp-action="Details"
+                               asp-route-id="@movie.Id"
+                               class="btn btn-sm btn-outline-primary">
+                                Chi tiết phim
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<div class="d-flex flex-wrap gap-2 mt-4">
+    <a asp-controller="Genres"
+       asp-action="Edit"
+       asp-route-id="@Model.Id"
+       class="btn btn-primary">
+        Sửa thể loại
+    </a>
+
+    <a asp-controller="Genres"
+       asp-action="Index"
+       class="btn btn-outline-secondary">
+        Quay lại danh sách
+    </a>
 </div>

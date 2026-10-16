@@ -1,9 +1,12 @@
+using System.Data;
+using Microsoft.Data.SqlClient;
 using CinemaBooking.Data;
 using CinemaBooking.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+
 
 namespace CinemaBooking.Controllers
 {
@@ -114,7 +117,7 @@ namespace CinemaBooking.Controllers
         public async Task<IActionResult> Edit(
             int id,
             [Bind("Id,Title,Description,DurationMinutes,ReleaseDate,PosterUrl,IsActive")]
-            Movie movie,
+    Movie movie,
             int[] selectedGenreIds)
         {
             if (id != movie.Id)
@@ -122,55 +125,102 @@ namespace CinemaBooking.Controllers
                 return NotFound();
             }
 
-            var existingMovie = await _context.Movies
-                .Include(m => m.Genres)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (existingMovie == null)
-            {
-                return NotFound();
-            }
-
-            var genres = await ValidateGenresAsync(selectedGenreIds);
-
+            // Kiểm tra các trường nhập trước khi mở giao dịch.
             if (!ModelState.IsValid)
             {
                 await LoadGenresAsync(selectedGenreIds);
                 return View(movie);
             }
 
-            // Cập nhật thông tin phim.
-            existingMovie.Title = movie.Title;
-            existingMovie.Description = movie.Description;
-            existingMovie.DurationMinutes = movie.DurationMinutes;
-            existingMovie.ReleaseDate = movie.ReleaseDate;
-            existingMovie.PosterUrl = movie.PosterUrl;
-            existingMovie.IsActive = movie.IsActive;
-
-            // Gỡ các liên kết thể loại cũ, không xóa thể loại.
-            existingMovie.Genres.Clear();
-
-            // Gán các thể loại được chọn.
-            foreach (var genre in genres)
-            {
-                existingMovie.Genres.Add(genre);
-            }
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!await MovieExistsAsync(movie.Id))
+                // Giữ việc kiểm tra lịch và sửa phim trong cùng giao dịch.
+                await using var transaction =
+                    await _context.Database.BeginTransactionAsync(
+                        IsolationLevel.Serializable);
+
+                var existingMovie = await _context.Movies
+                    .Include(m => m.Genres)
+                    .FirstOrDefaultAsync(m => m.Id == id);
+
+                if (existingMovie == null)
                 {
                     return NotFound();
                 }
 
-                throw;
+                var genres = await ValidateGenresAsync(selectedGenreIds);
+
+                if (movie.DurationMinutes != existingMovie.DurationMinutes)
+                {
+                    var now = DateTimeOffset.UtcNow
+                        .ToOffset(TimeSpan.FromHours(7))
+                        .DateTime;
+
+                    var hasFutureShowtimes = await _context.Showtimes
+                        .AnyAsync(s =>
+                            s.MovieId == id &&
+                            s.StartTime > now);
+
+                    if (hasFutureShowtimes)
+                    {
+                        ModelState.AddModelError(
+                            nameof(Movie.DurationMinutes),
+                            "Không thể đổi thời lượng vì phim còn suất chiếu "
+                            + "trong tương lai. Hãy giữ nguyên thời lượng hiện tại.");
+                    }
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    await LoadGenresAsync(selectedGenreIds);
+                    return View(movie);
+                }
+
+                existingMovie.Title = movie.Title;
+                existingMovie.Description = movie.Description;
+                existingMovie.DurationMinutes = movie.DurationMinutes;
+                existingMovie.ReleaseDate = movie.ReleaseDate;
+                existingMovie.PosterUrl = movie.PosterUrl;
+                existingMovie.IsActive = movie.IsActive;
+
+                existingMovie.Genres.Clear();
+
+                foreach (var genre in genres)
+                {
+                    existingMovie.Genres.Add(genre);
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Phim đã được thay đổi hoặc xóa bởi người khác. "
+                    + "Vui lòng tải lại trang.");
+            }
+            catch (Exception ex)
+                when (ex.GetBaseException() is SqlException sql &&
+                      sql.Number == 1205)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Có người đang cập nhật phim hoặc lịch chiếu cùng lúc. "
+                    + "Vui lòng thử lại.");
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Không thể lưu phim. Dữ liệu liên quan có thể đã thay đổi. "
+                    + "Vui lòng tải lại trang và kiểm tra.");
             }
 
-            return RedirectToAction(nameof(Index));
+            await LoadGenresAsync(selectedGenreIds);
+            return View(movie);
         }
 
         // GET: Movies/Delete/5
@@ -199,17 +249,55 @@ namespace CinemaBooking.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var movie = await _context.Movies.FindAsync(id);
+            var movie = await _context.Movies
+                .Include(m => m.Genres)
+                .FirstOrDefaultAsync(m => m.Id == id);
 
             if (movie == null)
             {
                 return NotFound();
             }
 
-            _context.Movies.Remove(movie);
-            await _context.SaveChangesAsync();
+            var hasShowtimes = await _context.Showtimes
+                .AnyAsync(s => s.MovieId == id);
 
-            return RedirectToAction(nameof(Index));
+            if (hasShowtimes)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Không thể xóa phim đã có lịch chiếu. "
+                    + "Bạn có thể vào trang Sửa và bỏ chọn Hiển thị phim.");
+
+                return View("Delete", movie);
+            }
+
+            try
+            {
+                _context.Movies.Remove(movie);
+                await _context.SaveChangesAsync();
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!await _context.Movies.AnyAsync(m => m.Id == id))
+                {
+                    return RedirectToAction(nameof(Index));
+                }
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Dữ liệu phim đã thay đổi. Vui lòng tải lại trang.");
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Không thể xóa phim. Dữ liệu có thể vừa được sử dụng "
+                    + "trong lịch chiếu. Vui lòng tải lại trang và kiểm tra.");
+            }
+
+            return View("Delete", movie);
         }
 
         // Nạp danh sách lựa chọn và đánh dấu các thể loại đã chọn.
