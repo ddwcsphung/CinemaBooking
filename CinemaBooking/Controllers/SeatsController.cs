@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using Microsoft.Data.SqlClient;
 using CinemaBooking.Data;
 using CinemaBooking.Models;
@@ -13,10 +13,12 @@ namespace CinemaBooking.Controllers;
 public class SeatsController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<SeatsController> _logger;
 
-    public SeatsController(ApplicationDbContext context)
+    public SeatsController(ApplicationDbContext context, ILogger<SeatsController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     // GET: Seats?roomId=1
@@ -115,12 +117,14 @@ public class SeatsController : Controller
             when (ex.GetBaseException() is SqlException sql &&
                   sql.Number == 1205)
         {
+            _logger.LogWarning(ex, "Xung đột giao dịch dữ liệu");
             TempData["SeatError"] =
                 "Có người đang đặt vé hoặc cập nhật ghế cùng lúc. "
                 + "Vui lòng tải lại trang và thử lại.";
         }
-        catch (DbUpdateException)
+        catch (Exception ex) when (ex is DbUpdateException or SqlException)
         {
+            _logger.LogError(ex, "Không thể lưu thay đổi dữ liệu");
             TempData["SeatError"] =
                 "Không thể cập nhật ghế. "
                 + "Dữ liệu có thể đã thay đổi. Vui lòng thử lại.";
@@ -221,8 +225,9 @@ public class SeatsController : Controller
             // Lưu tất cả ghế trong một lần.
             await _context.SaveChangesAsync();
         }
-        catch (DbUpdateException)
+        catch (Exception ex) when (ex is DbUpdateException or SqlException)
         {
+            _logger.LogError(ex, "Không thể lưu thay đổi dữ liệu");
             ModelState.AddModelError(
                 string.Empty,
                 "Không thể tạo ghế. Dữ liệu phòng hoặc ghế có thể "

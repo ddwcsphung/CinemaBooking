@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using CinemaBooking.Data;
 using CinemaBooking.Models;
 using CinemaBooking.ViewModels;
@@ -233,6 +233,7 @@ public class BookingsController : Controller
             when (ex.GetBaseException() is SqlException sql &&
                   (sql.Number == 2601 || sql.Number == 2627))
         {
+            _logger.LogWarning(ex, "Trùng dữ liệu khi đặt vé suất {ShowtimeId}", request.ShowtimeId);
             // Database từ chối dữ liệu trùng.
             return BookingError(
                 request.ShowtimeId,
@@ -243,19 +244,20 @@ public class BookingsController : Controller
             when (ex.GetBaseException() is SqlException sql &&
                   sql.Number == 1205)
         {
+            _logger.LogWarning(ex, "Xung đột đặt vé suất {ShowtimeId}", request.ShowtimeId);
             // Hai giao dịch cạnh tranh: SQL Server hủy một giao dịch.
             return BookingError(
                 request.ShowtimeId,
                 "Có người đang đặt vé cùng lúc. "
                 + "Vui lòng kiểm tra ghế và thử lại.");
         }
-        catch (DbUpdateException ex)
+        catch (Exception ex) when (ex is DbUpdateException or SqlException)
         {
             _logger.LogError(ex, "Không thể lưu đơn đặt vé.");
 
             return BookingError(
                 request.ShowtimeId,
-                "Không thể lưu đơn. Vui lòng tải lại trang và thử lại.");
+                "Chưa xác nhận được kết quả đặt vé. Vui lòng kiểm tra lịch sử đặt vé trước khi thử lại.");
         }
     }
 

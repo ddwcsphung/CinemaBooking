@@ -1,3 +1,4 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,10 +11,12 @@ namespace CinemaBooking.Controllers
     public class RoomsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<RoomsController> _logger;
 
-        public RoomsController(ApplicationDbContext context)
+        public RoomsController(ApplicationDbContext context, ILogger<RoomsController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: Rooms
@@ -66,10 +69,20 @@ namespace CinemaBooking.Controllers
                 return View(room);
             }
 
-            _context.Rooms.Add(room);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Rooms.Add(room);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex) when (ex is DbUpdateException or SqlException)
+            {
+                _logger.LogError(ex, "Không thể tạo phòng");
+                ModelState.AddModelError(string.Empty,
+                    "Không thể lưu phòng. Vui lòng kiểm tra và thử lại.");
+            }
 
-            return RedirectToAction(nameof(Index));
+            return View(room);
         }
 
         // GET: Rooms/Edit/5
@@ -120,18 +133,22 @@ namespace CinemaBooking.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
-                if (!RoomExists(room.Id))
-                {
-                    return NotFound();
-                }
-
-                throw;
+                _logger.LogWarning(ex, "Xung đột khi sửa phòng {RoomId}", room.Id);
+                ModelState.AddModelError(string.Empty,
+                    "Phòng đã được thay đổi hoặc xóa. Vui lòng tải lại trang.");
+            }
+            catch (Exception ex) when (ex is DbUpdateException or SqlException)
+            {
+                _logger.LogError(ex, "Không thể sửa phòng {RoomId}", room.Id);
+                ModelState.AddModelError(string.Empty,
+                    "Không thể lưu phòng. Vui lòng kiểm tra và thử lại.");
             }
 
-            return RedirectToAction(nameof(Index));
+            return View(room);
         }
 
         // GET: Rooms/Delete/5
@@ -184,8 +201,9 @@ namespace CinemaBooking.Controllers
                 _context.Rooms.Remove(room);
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateException)
+            catch (Exception ex) when (ex is DbUpdateException or SqlException)
             {
+                _logger.LogError(ex, "Không thể lưu thay đổi dữ liệu");
                 ModelState.AddModelError(
                     string.Empty,
                     "Không thể xóa phòng. Phòng có thể đang được "

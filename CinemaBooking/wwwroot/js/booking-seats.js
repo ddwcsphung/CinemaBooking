@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
     "use strict";
 
     const form = document.getElementById("booking-form");
@@ -87,7 +87,8 @@
         }
 
         if (!response.ok) {
-            throw new Error("Không thực hiện được yêu cầu.");
+            const error = await response.json().catch(() => null);
+            throw new Error(error?.message || "Không thực hiện được yêu cầu.");
         }
 
         return await response.json();
@@ -107,6 +108,7 @@
         }
 
         saving = true;
+        selectionText.textContent = "Đang lưu lựa chọn...";
         updateSummary();
 
         try {
@@ -115,15 +117,24 @@
                 const sentRevision = revision;
                 const ids = selectedSeats().map(input => Number(input.value));
 
-                const data = await requestJson(form.dataset.selectionUrl, {
-                    method: "POST",
-                    headers: {
-                        "Accept": "application/json",
-                        "Content-Type": "application/json",
-                        "RequestVerificationToken": token
-                    },
-                    body: JSON.stringify({ seatIds: ids })
-                });
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 10000);
+                let data;
+
+                try {
+                    data = await requestJson(form.dataset.selectionUrl, {
+                        method: "POST",
+                        headers: {
+                            "Accept": "application/json",
+                            "Content-Type": "application/json",
+                            "RequestVerificationToken": token
+                        },
+                        body: JSON.stringify({ seatIds: ids }),
+                        signal: controller.signal
+                    });
+                } finally {
+                    clearTimeout(timeout);
+                }
 
                 if (!Array.isArray(data.seatIds)) {
                     throw new Error("Dữ liệu lựa chọn không hợp lệ.");
@@ -159,11 +170,13 @@
 
                 updateSummary();
             }
-        } catch {
+        } catch (error) {
             if (!stopped) {
-                selectionText.textContent =
-                    "Chưa lưu được lựa chọn. " +
-                    "Vui lòng giữ trang mở; hệ thống sẽ thử lại.";
+                const message = error.name === "AbortError"
+                    ? "Lưu lựa chọn quá thời gian chờ."
+                    : "Chưa lưu được lựa chọn.";
+                selectionText.textContent = message +
+                    " Lựa chọn hiện tại vẫn được giữ; hệ thống sẽ thử lại.";
             }
         } finally {
             saving = false;

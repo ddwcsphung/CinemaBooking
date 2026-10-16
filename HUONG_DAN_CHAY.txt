@@ -19,6 +19,6 @@ LƯU Ý
 - Giữ thư mục Migrations và ModelSnapshot trong Git; bỏ qua .vs, bin, obj và tệp database.
 
 LÀM VIỆC NHÓM
-- Pull nhánh main trước khi tạo nhánh chức năng.
+- Pull nhánh master trước khi tạo nhánh chức năng.
 - Mỗi chức năng làm trên một branch riêng; commit và push rồi tạo pull request để bạn khác xem trước khi merge.
 - Thống nhất thay đổi Model và migration trước khi làm; sau khi pull migration mới, chạy Update-Database.

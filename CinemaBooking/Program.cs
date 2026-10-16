@@ -1,3 +1,5 @@
+using CinemaBooking.Filters;
+using Microsoft.AspNetCore.Mvc;
 using CinemaBooking.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +16,16 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     options.SignIn.RequireConfirmedAccount = false)
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+    options.Filters.Add<BackendExceptionFilter>())
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+            new BadRequestObjectResult(new
+            {
+                message = "Dữ liệu yêu cầu không hợp lệ. Vui lòng kiểm tra và thử lại."
+            });
+    });
 
 // Lưu dữ liệu session trong bộ nhớ của ứng dụng.
 builder.Services.AddDistributedMemoryCache();
