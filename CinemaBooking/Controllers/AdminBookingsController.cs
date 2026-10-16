@@ -1,4 +1,5 @@
-﻿using CinemaBooking.Data;
+using Microsoft.Data.SqlClient;
+using CinemaBooking.Data;
 using CinemaBooking.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,10 +11,12 @@ namespace CinemaBooking.Controllers;
 public class AdminBookingsController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<AdminBookingsController> _logger;
 
-    public AdminBookingsController(ApplicationDbContext context)
+    public AdminBookingsController(ApplicationDbContext context, ILogger<AdminBookingsController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     // GET: /AdminBookings
@@ -72,35 +75,50 @@ public class AdminBookingsController : Controller
         string? keyword,
         int page = 1)
     {
-        // Chỉ cập nhật khi đơn vẫn chưa thanh toán.
-        // Việc kiểm tra và cập nhật nằm trong cùng một câu SQL.
-        var affectedRows = await _context.Bookings
-            .Where(b =>
-                b.Id == id &&
-                b.PaymentStatus == BookingPaymentStatus.Unpaid)
-            .ExecuteUpdateAsync(setters => setters
-                .SetProperty(
-                    b => b.PaymentStatus,
-                    BookingPaymentStatus.Paid));
-
-        if (affectedRows == 1)
+        if (id <= 0)
         {
-            TempData["AdminBookingSuccess"] =
-                "Đã xác nhận thanh toán cho đơn đặt vé.";
+            return BadRequest("Mã đơn đặt vé không hợp lệ.");
         }
-        else
-        {
-            var exists = await _context.Bookings
-                .AnyAsync(b => b.Id == id);
 
-            if (!exists)
+        try
+        {
+            // Chỉ cập nhật khi đơn vẫn chưa thanh toán.
+            // Việc kiểm tra và cập nhật nằm trong cùng một câu SQL.
+            var affectedRows = await _context.Bookings
+                .Where(b =>
+                    b.Id == id &&
+                    b.PaymentStatus == BookingPaymentStatus.Unpaid)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(
+                        b => b.PaymentStatus,
+                        BookingPaymentStatus.Paid));
+
+            if (affectedRows == 1)
             {
-                return NotFound();
+                TempData["AdminBookingSuccess"] =
+                    "Đã xác nhận thanh toán cho đơn đặt vé.";
+            }
+            else
+            {
+                var exists = await _context.Bookings
+                    .AnyAsync(b => b.Id == id);
+
+                if (!exists)
+                {
+                    return NotFound();
+                }
+
+                TempData["AdminBookingInfo"] =
+                    "Đơn này đã được thanh toán trước đó. "
+                    + "Không cần xác nhận lại.";
             }
 
-            TempData["AdminBookingInfo"] =
-                "Đơn này đã được thanh toán trước đó. "
-                + "Không cần xác nhận lại.";
+        }
+        catch (Exception ex) when (ex is DbUpdateException or SqlException)
+        {
+            _logger.LogError(ex, "Không thể xác nhận thanh toán đơn {BookingId}", id);
+            TempData["AdminBookingError"] =
+                "Chưa xác nhận được kết quả thanh toán. Vui lòng tải lại và kiểm tra trạng thái đơn trước khi thử lại.";
         }
 
         return RedirectToAction(

@@ -11,10 +11,12 @@ using CinemaBooking.Data;
 public class GenresController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<GenresController> _logger;
 
-    public GenresController(ApplicationDbContext context)
+    public GenresController(ApplicationDbContext context, ILogger<GenresController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     // GET: GENRES
@@ -59,9 +61,18 @@ public class GenresController : Controller
     {
         if (ModelState.IsValid)
         {
-            _context.Add(genre);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                _context.Add(genre);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex) when (ex is DbUpdateException or SqlException)
+            {
+                _logger.LogError(ex, "Không thể tạo thể loại");
+                ModelState.AddModelError(string.Empty,
+                    "Không thể lưu thể loại. Vui lòng kiểm tra và thử lại.");
+            }
         }
         return View(genre);
     }
@@ -100,19 +111,20 @@ public class GenresController : Controller
             {
                 _context.Update(genre);
                 await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
-                if (!GenreExists(genre.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                _logger.LogWarning(ex, "Xung đột khi sửa thể loại {GenreId}", genre.Id);
+                ModelState.AddModelError(string.Empty,
+                    "Thể loại đã được thay đổi hoặc xóa. Vui lòng tải lại trang.");
             }
-            return RedirectToAction(nameof(Index));
+            catch (Exception ex) when (ex is DbUpdateException or SqlException)
+            {
+                _logger.LogError(ex, "Không thể sửa thể loại {GenreId}", genre.Id);
+                ModelState.AddModelError(string.Empty,
+                    "Không thể lưu thể loại. Vui lòng kiểm tra và thử lại.");
+            }
         }
         return View(genre);
     }
@@ -186,13 +198,15 @@ public class GenresController : Controller
             when (ex.GetBaseException() is SqlException sql &&
                   sql.Number == 1205)
         {
+            _logger.LogWarning(ex, "Xung đột giao dịch dữ liệu");
             ModelState.AddModelError(
                 string.Empty,
                 "Có người đang cập nhật dữ liệu cùng lúc. "
                 + "Vui lòng tải lại trang và thử lại.");
         }
-        catch (DbUpdateException)
+        catch (Exception ex) when (ex is DbUpdateException or SqlException)
         {
+            _logger.LogError(ex, "Không thể lưu thay đổi dữ liệu");
             ModelState.AddModelError(
                 string.Empty,
                 "Không thể xóa thể loại vì dữ liệu đã thay đổi "

@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Text.Json;
 using CinemaBooking.Data;
 using CinemaBooking.ViewModels;
@@ -15,10 +15,12 @@ namespace CinemaBooking.Controllers;
 public class SeatSelectionsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<SeatSelectionsController> _logger;
 
-    public SeatSelectionsController(ApplicationDbContext context)
+    public SeatSelectionsController(ApplicationDbContext context, ILogger<SeatSelectionsController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     private static DateTime CinemaNow =>
@@ -63,10 +65,20 @@ public class SeatSelectionsController : ControllerBase
         var key = GetSessionKey(userId, showtimeId);
         var savedJson = HttpContext.Session.GetString(key);
 
-        var savedIds = string.IsNullOrEmpty(savedJson)
-            ? new List<int>()
-            : JsonSerializer.Deserialize<List<int>>(savedJson)
-                ?? new List<int>();
+        var savedIds = new List<int>();
+        if (!string.IsNullOrEmpty(savedJson))
+        {
+            try
+            {
+                savedIds = JsonSerializer.Deserialize<List<int>>(savedJson) ?? new List<int>();
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "Lựa chọn ghế tạm không hợp lệ cho suất {ShowtimeId}", showtimeId);
+                HttpContext.Session.Remove(key);
+                await HttpContext.Session.CommitAsync(cancellationToken);
+            }
+        }
 
         // Chỉ trả lại ghế vẫn còn trống và đang sử dụng.
         var validIds = await GetAvailableSeatIdsAsync(

@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using CinemaBooking.Data;
 using CinemaBooking.Models;
 using CinemaBooking.ViewModels;
@@ -14,12 +14,14 @@ namespace CinemaBooking.Controllers;
 public class ShowtimesController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<ShowtimesController> _logger;
 
     private const int CleaningMinutes = 15;
 
-    public ShowtimesController(ApplicationDbContext context)
+    public ShowtimesController(ApplicationDbContext context, ILogger<ShowtimesController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     // Quy ước lịch chiếu của rạp dùng giờ Việt Nam (UTC+7).
@@ -81,13 +83,12 @@ public class ShowtimesController : Controller
             return View(model);
         }
 
-        // Giữ việc kiểm tra lịch và lưu suất trong cùng giao dịch.
-        await using var transaction =
-            await _context.Database.BeginTransactionAsync(
-                IsolationLevel.Serializable);
-
         try
         {
+            // Giữ cả mở giao dịch, kiểm tra lịch và lưu suất trong phạm vi xử lý lỗi.
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable);
             var movie = await _context.Movies
                 .FirstOrDefaultAsync(m =>
                     m.Id == model.MovieId && m.IsActive);
@@ -181,24 +182,19 @@ public class ShowtimesController : Controller
                 }
             }
 
-            await transaction.RollbackAsync();
         }
-        catch (DbUpdateException)
+        catch (Exception ex)
+            when (ex.GetBaseException() is SqlException sql && sql.Number == 1205)
         {
-            await transaction.RollbackAsync();
-
-            ModelState.AddModelError(
-                string.Empty,
-                "Không thể lưu suất chiếu. Dữ liệu có thể đã thay đổi. "
-                + "Vui lòng kiểm tra và thử lại.");
-        }
-        catch (SqlException ex) when (ex.Number == 1205)
-        {
-            await transaction.RollbackAsync();
-
-            ModelState.AddModelError(
-                string.Empty,
+            _logger.LogWarning(ex, "Xung đột khi tạo suất chiếu");
+            ModelState.AddModelError(string.Empty,
                 "Có người khác đang cập nhật lịch. Vui lòng thử lưu lại.");
+        }
+        catch (Exception ex) when (ex is DbUpdateException or SqlException)
+        {
+            _logger.LogError(ex, "Không thể tạo suất chiếu");
+            ModelState.AddModelError(string.Empty,
+                "Không thể lưu suất chiếu. Dữ liệu có thể đã thay đổi. Vui lòng kiểm tra và thử lại.");
         }
 
         await LoadOptionsAsync(model);
@@ -206,60 +202,82 @@ public class ShowtimesController : Controller
         return View(model);
     }
 
-    // POST: Showtimes/ToggleSale/5
+    // POST: Showtimes/SetSale/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ToggleSale(int id)
+    public async Task<IActionResult> SetSale(int id, bool? isActive)
     {
-        var showtime = await _context.Showtimes
-            .Include(s => s.Movie)
-            .Include(s => s.Room)
-            .FirstOrDefaultAsync(s => s.Id == id);
-
-        if (showtime == null)
+        if (id <= 0 || !isActive.HasValue || !ModelState.IsValid)
         {
-            return NotFound();
+            return BadRequest("Thông tin đóng/mở bán không hợp lệ.");
         }
 
-        // Khi chuyển từ đóng sang mở bán, kiểm tra điều kiện.
-        if (!showtime.IsActive)
+        try
         {
-            if (showtime.StartTime <= CinemaNow)
-            {
-                TempData["ShowtimeError"] =
-                    "Không thể mở bán suất chiếu đã bắt đầu.";
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
 
+            var showtime = await _context.Showtimes
+                .Include(s => s.Movie)
+                .Include(s => s.Room)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (showtime == null)
+            {
+                return NotFound();
+            }
+
+            if (showtime.IsActive == isActive.Value)
+            {
+                TempData["ShowtimeMessage"] = "Suất chiếu đã ở trạng thái được yêu cầu.";
                 return RedirectToAction(nameof(Index));
             }
 
-            if (!showtime.Movie.IsActive || !showtime.Room.IsActive)
+            if (isActive.Value)
             {
-                TempData["ShowtimeError"] =
-                    "Không thể mở bán vì phim đang bị ẩn "
-                    + "hoặc phòng đã ngừng hoạt động.";
+                if (showtime.StartTime <= CinemaNow)
+                {
+                    TempData["ShowtimeError"] = "Không thể mở bán suất chiếu đã bắt đầu.";
+                    return RedirectToAction(nameof(Index));
+                }
 
-                return RedirectToAction(nameof(Index));
+                if (!showtime.Movie.IsActive || !showtime.Room.IsActive)
+                {
+                    TempData["ShowtimeError"] =
+                        "Không thể mở bán vì phim đang bị ẩn hoặc phòng đã ngừng hoạt động.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (!await _context.Seats.AnyAsync(s =>
+                    s.RoomId == showtime.RoomId && s.IsActive))
+                {
+                    TempData["ShowtimeError"] =
+                        "Không thể mở bán vì phòng không có ghế đang sử dụng.";
+                    return RedirectToAction(nameof(Index));
+                }
             }
 
-            var hasActiveSeats = await _context.Seats.AnyAsync(s =>
-                s.RoomId == showtime.RoomId && s.IsActive);
+            showtime.IsActive = isActive.Value;
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
 
-            if (!hasActiveSeats)
-            {
-                TempData["ShowtimeError"] =
-                    "Không thể mở bán vì phòng không có ghế đang sử dụng.";
-
-                return RedirectToAction(nameof(Index));
-            }
+            TempData["ShowtimeMessage"] = showtime.IsActive
+                ? "Đã mở bán suất chiếu."
+                : "Đã đóng bán suất chiếu.";
         }
-
-        showtime.IsActive = !showtime.IsActive;
-
-        await _context.SaveChangesAsync();
-
-        TempData["ShowtimeMessage"] = showtime.IsActive
-            ? "Đã mở bán suất chiếu."
-            : "Đã đóng bán suất chiếu.";
+        catch (Exception ex)
+            when (ex.GetBaseException() is SqlException sql && sql.Number == 1205)
+        {
+            _logger.LogWarning(ex, "Xung đột cập nhật suất chiếu {ShowtimeId}", id);
+            TempData["ShowtimeError"] =
+                "Có người đang cập nhật dữ liệu cùng lúc. Vui lòng tải lại trang và thử lại.";
+        }
+        catch (Exception ex) when (ex is DbUpdateException or SqlException)
+        {
+            _logger.LogError(ex, "Không thể cập nhật trạng thái bán {ShowtimeId}", id);
+            TempData["ShowtimeError"] =
+                "Không thể cập nhật trạng thái bán. Vui lòng tải lại trang và kiểm tra.";
+        }
 
         return RedirectToAction(nameof(Index));
     }
@@ -306,8 +324,9 @@ public class ShowtimesController : Controller
 
             TempData["ShowtimeMessage"] = "Đã xóa suất chiếu.";
         }
-        catch (DbUpdateException)
+        catch (Exception ex) when (ex is DbUpdateException or SqlException)
         {
+            _logger.LogError(ex, "Không thể lưu thay đổi dữ liệu");
             TempData["ShowtimeError"] =
                 "Không thể xóa suất chiếu vì có lỗi lưu dữ liệu "
                 + "hoặc dữ liệu liên quan. Hãy tải lại trang và kiểm tra.";
@@ -506,13 +525,15 @@ public class ShowtimesController : Controller
             when (ex.GetBaseException() is SqlException sql &&
                   sql.Number == 1205)
         {
+            _logger.LogWarning(ex, "Xung đột giao dịch dữ liệu");
             ModelState.AddModelError(
                 string.Empty,
                 "Có người đang đặt vé hoặc cập nhật lịch cùng lúc. " +
                 "Vui lòng tải lại trang và thử lại.");
         }
-        catch (DbUpdateException)
+        catch (Exception ex) when (ex is DbUpdateException or SqlException)
         {
+            _logger.LogError(ex, "Không thể lưu thay đổi dữ liệu");
             ModelState.AddModelError(
                 string.Empty,
                 "Không thể cập nhật suất chiếu. " +

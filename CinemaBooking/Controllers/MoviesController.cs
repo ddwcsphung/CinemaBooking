@@ -14,10 +14,12 @@ namespace CinemaBooking.Controllers
     public class MoviesController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<MoviesController> _logger;
 
-        public MoviesController(ApplicationDbContext context)
+        public MoviesController(ApplicationDbContext context, ILogger<MoviesController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: Movies
@@ -79,10 +81,21 @@ namespace CinemaBooking.Controllers
 
             movie.Genres = genres;
 
-            _context.Movies.Add(movie);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Movies.Add(movie);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex) when (ex is DbUpdateException or SqlException)
+            {
+                _logger.LogError(ex, "Không thể tạo phim");
+                ModelState.AddModelError(string.Empty,
+                    "Không thể lưu phim. Vui lòng kiểm tra và thử lại.");
+            }
 
-            return RedirectToAction(nameof(Index));
+            await LoadGenresAsync(selectedGenreIds);
+            return View(movie);
         }
 
         // GET: Movies/Edit/5
@@ -117,7 +130,7 @@ namespace CinemaBooking.Controllers
         public async Task<IActionResult> Edit(
             int id,
             [Bind("Id,Title,Description,DurationMinutes,ReleaseDate,PosterUrl,IsActive")]
-    Movie movie,
+            Movie movie,
             int[] selectedGenreIds)
         {
             if (id != movie.Id)
@@ -149,6 +162,23 @@ namespace CinemaBooking.Controllers
                 }
 
                 var genres = await ValidateGenresAsync(selectedGenreIds);
+
+                // Không cho ngày khởi chiếu muộn hơn suất chiếu sớm nhất.
+                var earliestStartTime = await _context.Showtimes
+                    .Where(s => s.MovieId == id)
+                    .Select(s => (DateTime?)s.StartTime)
+                    .MinAsync();
+
+                if (earliestStartTime.HasValue &&
+                    movie.ReleaseDate.Date > earliestStartTime.Value.Date)
+                {
+                    ModelState.AddModelError(
+                        nameof(Movie.ReleaseDate),
+                        $"Ngày khởi chiếu không được sau ngày " +
+                        $"{earliestStartTime.Value:dd/MM/yyyy} " +
+                        "vì phim đã có suất chiếu vào ngày này.");
+                }
+
 
                 if (movie.DurationMinutes != existingMovie.DurationMinutes)
                 {
@@ -195,8 +225,9 @@ namespace CinemaBooking.Controllers
 
                 return RedirectToAction(nameof(Index));
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
+                _logger.LogWarning(ex, "Xung đột cập nhật dữ liệu");
                 ModelState.AddModelError(
                     string.Empty,
                     "Phim đã được thay đổi hoặc xóa bởi người khác. "
@@ -206,13 +237,15 @@ namespace CinemaBooking.Controllers
                 when (ex.GetBaseException() is SqlException sql &&
                       sql.Number == 1205)
             {
+                _logger.LogWarning(ex, "Xung đột giao dịch dữ liệu");
                 ModelState.AddModelError(
                     string.Empty,
                     "Có người đang cập nhật phim hoặc lịch chiếu cùng lúc. "
                     + "Vui lòng thử lại.");
             }
-            catch (DbUpdateException)
+            catch (Exception ex) when (ex is DbUpdateException or SqlException)
             {
+                _logger.LogError(ex, "Không thể lưu thay đổi dữ liệu");
                 ModelState.AddModelError(
                     string.Empty,
                     "Không thể lưu phim. Dữ liệu liên quan có thể đã thay đổi. "
@@ -278,8 +311,9 @@ namespace CinemaBooking.Controllers
 
                 return RedirectToAction(nameof(Index));
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
+                _logger.LogWarning(ex, "Xung đột cập nhật dữ liệu");
                 if (!await _context.Movies.AnyAsync(m => m.Id == id))
                 {
                     return RedirectToAction(nameof(Index));
@@ -289,8 +323,9 @@ namespace CinemaBooking.Controllers
                     string.Empty,
                     "Dữ liệu phim đã thay đổi. Vui lòng tải lại trang.");
             }
-            catch (DbUpdateException)
+            catch (Exception ex) when (ex is DbUpdateException or SqlException)
             {
+                _logger.LogError(ex, "Không thể lưu thay đổi dữ liệu");
                 ModelState.AddModelError(
                     string.Empty,
                     "Không thể xóa phim. Dữ liệu có thể vừa được sử dụng "
