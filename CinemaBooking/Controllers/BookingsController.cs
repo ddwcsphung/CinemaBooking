@@ -203,6 +203,26 @@ public class BookingsController : Controller
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
+            // Đơn đã được lưu thành công.
+            // Lỗi dọn session không được biến thành thông báo đặt vé thất bại.
+            try
+            {
+                await HttpContext.Session.LoadAsync();
+
+                var selectionKey =
+                    $"SeatSelection:{user.Id}:{booking.ShowtimeId}";
+
+                HttpContext.Session.Remove(selectionKey);
+                await HttpContext.Session.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Đã lưu đơn {BookingId} nhưng chưa xóa được lựa chọn tạm.",
+                    booking.Id);
+            }
+
             TempData["BookingSuccess"] = "Đặt vé thành công.";
 
             return RedirectToAction(

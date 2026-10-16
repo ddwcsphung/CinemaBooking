@@ -58,9 +58,16 @@
       asp-action="Create"
       method="post"
       id="booking-form"
-      data-seats-url="@Url.Content($"~/api/showtimes/{Model.ShowtimeId}/seats")">
+      data-seats-url="@Url.Content($"~/api/showtimes/{Model.ShowtimeId}/seats")"
+      data-selection-url="@Url.Content($"~/api/showtimes/{Model.ShowtimeId}/selection")">
 
     <input asp-for="ShowtimeId" type="hidden" />
+
+    <p id="selection-status"
+       class="text-muted small"
+       role="status">
+        Đang khôi phục lựa chọn...
+    </p>
 
     <div class="border rounded bg-light text-center p-3 mb-4">
         MÀN HÌNH

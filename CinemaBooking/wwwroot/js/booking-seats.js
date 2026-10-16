@@ -10,17 +10,27 @@
     const unitPriceText = document.getElementById("unit-price");
     const errorText = document.getElementById("seat-error");
     const syncText = document.getElementById("seat-sync-status");
+    const selectionText = document.getElementById("selection-status");
     const availability = document.getElementById("availability-message");
     const submitButton = document.getElementById("submit-booking");
+
+    // Form POST của Razor tự sinh trường chống giả mạo yêu cầu.
+    const token = form.querySelector(
+        'input[name="__RequestVerificationToken"]'
+    )?.value;
 
     const formatter = new Intl.NumberFormat("vi-VN");
 
     let price = null;
     let ready = false;
+    let restored = false;
     let submitting = false;
     let loading = false;
+    let saving = false;
+    let dirty = false;
     let stopped = false;
     let lastUpdated = 0;
+    let revision = 0;
 
     function selectedSeats() {
         return choices.filter(input => input.checked && !input.disabled);
@@ -38,7 +48,10 @@
 
         submitButton.disabled =
             !ready ||
+            !restored ||
             submitting ||
+            saving ||
+            dirty ||
             selected.length === 0 ||
             selected.length > 10;
     }
@@ -50,8 +63,116 @@
         updateSummary();
     }
 
+    async function requestJson(url, options = {}) {
+        const response = await fetch(url, {
+            credentials: "same-origin",
+            cache: "no-store",
+            ...options
+        });
+
+        if (response.redirected ||
+            response.status === 401 ||
+            response.status === 403) {
+            stopWithMessage(
+                "Phiên đăng nhập không còn hợp lệ. " +
+                "Vui lòng tải lại trang và đăng nhập.");
+            throw new Error("Authentication required");
+        }
+
+        if (response.status === 404) {
+            stopWithMessage(
+                "Suất chiếu không còn mở bán. " +
+                "Vui lòng quay lại danh sách phim.");
+            throw new Error("Showtime unavailable");
+        }
+
+        if (!response.ok) {
+            throw new Error("Không thực hiện được yêu cầu.");
+        }
+
+        return await response.json();
+    }
+
+    function markSelectionChanged() {
+        revision++;
+        dirty = true;
+        selectionText.textContent = "Đang lưu lựa chọn...";
+        updateSummary();
+    }
+
+    async function saveSelection() {
+        if (!restored || saving || loading ||
+            submitting || stopped || !dirty) {
+            return;
+        }
+
+        saving = true;
+        updateSummary();
+
+        try {
+            // Gửi lần lượt, tránh các lần chọn nhanh ghi đè sai thứ tự.
+            while (dirty && !submitting && !stopped) {
+                const sentRevision = revision;
+                const ids = selectedSeats().map(input => Number(input.value));
+
+                const data = await requestJson(form.dataset.selectionUrl, {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json",
+                        "RequestVerificationToken": token
+                    },
+                    body: JSON.stringify({ seatIds: ids })
+                });
+
+                if (!Array.isArray(data.seatIds)) {
+                    throw new Error("Dữ liệu lựa chọn không hợp lệ.");
+                }
+
+                // Người dùng đã chọn tiếp trong lúc gửi:
+                // gửi lại lựa chọn mới nhất, không áp dụng phản hồi cũ.
+                if (sentRevision !== revision) {
+                    continue;
+                }
+
+                const accepted = new Set(data.seatIds.map(String));
+                const removed = [];
+
+                for (const input of choices) {
+                    if (input.checked && !accepted.has(input.value)) {
+                        input.checked = false;
+                        removed.push(input.dataset.label);
+                    }
+                }
+
+                if (removed.length > 0) {
+                    errorText.textContent =
+                        "Ghế " + removed.join(", ") +
+                        " không còn hợp lệ và đã được bỏ chọn.";
+                }
+
+                dirty = false;
+
+                selectionText.textContent = accepted.size > 0
+                    ? "Đã lưu lựa chọn tạm. Ghế chưa được giữ chỗ."
+                    : "Đã xóa lựa chọn tạm.";
+
+                updateSummary();
+            }
+        } catch {
+            if (!stopped) {
+                selectionText.textContent =
+                    "Chưa lưu được lựa chọn. " +
+                    "Vui lòng giữ trang mở; hệ thống sẽ thử lại.";
+            }
+        } finally {
+            saving = false;
+            updateSummary();
+        }
+    }
+
     async function refreshSeats() {
-        if (loading || submitting || stopped) return;
+        if (loading || saving || submitting || stopped) return;
 
         loading = true;
 
@@ -59,56 +180,24 @@
         const timeout = setTimeout(() => controller.abort(), 10000);
 
         try {
-            const response = await fetch(form.dataset.seatsUrl, {
-                method: "GET",
-                credentials: "same-origin",
-                cache: "no-store",
-                headers: {
-                    "Accept": "application/json"
-                },
+            const data = await requestJson(form.dataset.seatsUrl, {
+                headers: { "Accept": "application/json" },
                 signal: controller.signal
             });
-
-            // Không xử lý trang HTML đăng nhập như dữ liệu JSON.
-            if (response.redirected ||
-                response.status === 401 ||
-                response.status === 403) {
-                stopWithMessage(
-                    "Phiên đăng nhập không còn hợp lệ. " +
-                    "Vui lòng tải lại trang và đăng nhập.");
-                return;
-            }
-
-            if (response.status === 404) {
-                stopWithMessage(
-                    "Suất chiếu không còn mở bán. " +
-                    "Vui lòng quay lại danh sách phim.");
-                return;
-            }
-
-            if (!response.ok) {
-                throw new Error("Không đọc được trạng thái ghế.");
-            }
-
-            const data = await response.json();
 
             if (!Array.isArray(data.seats) ||
                 typeof data.basePrice !== "number" ||
                 !Number.isFinite(data.basePrice) ||
                 data.basePrice <= 0) {
-                throw new Error("Dữ liệu không hợp lệ.");
+                throw new Error("Dữ liệu ghế không hợp lệ.");
             }
 
-            // Không sửa giao diện nếu người dùng đã gửi đơn
-            // trong lúc yêu cầu API đang chạy.
             if (submitting) return;
 
             const seatsById = new Map(
                 data.seats.map(seat => [String(seat.seatId), seat])
             );
 
-            // Phòng hoặc sơ đồ ghế đã thay đổi: cần tải lại
-            // toàn bộ trang để thông tin hiển thị thống nhất.
             if (data.seats.length !== choices.length ||
                 choices.some(input => !seatsById.has(input.value))) {
                 stopWithMessage(
@@ -116,8 +205,26 @@
                 return;
             }
 
+            // Chỉ đọc session khi bắt đầu trang.
+            // Không đọc lại mỗi 5 giây vì có thể ghi đè lựa chọn đang thao tác.
+            let saved = null;
+
+            if (!restored) {
+                saved = await requestJson(form.dataset.selectionUrl, {
+                    headers: { "Accept": "application/json" },
+                    signal: controller.signal
+                });
+
+                if (!Array.isArray(saved.seatIds) ||
+                    !Array.isArray(saved.removedSeatIds)) {
+                    throw new Error("Dữ liệu session không hợp lệ.");
+                }
+            }
+
+            const priceChanged =
+                price !== null && price !== data.basePrice;
+
             const removed = [];
-            const priceChanged = price !== null && price !== data.basePrice;
 
             for (const input of choices) {
                 const seat = seatsById.get(input.value);
@@ -144,16 +251,36 @@
             price = data.basePrice;
             unitPriceText.textContent = formatter.format(price) + " đ";
 
-            if (priceChanged) {
-                // Yêu cầu chọn lại để người dùng nhận biết giá mới.
-                choices.forEach(input => input.checked = false);
+            if (saved !== null) {
+                const savedIds = new Set(saved.seatIds.map(String));
 
+                for (const input of choices) {
+                    input.checked =
+                        !input.disabled && savedIds.has(input.value);
+                }
+
+                restored = true;
+
+                if (saved.removedSeatIds.length > 0) {
+                    errorText.textContent =
+                        "Một số ghế đã lưu không còn trống " +
+                        "hoặc đã ngừng sử dụng nên không được khôi phục.";
+                }
+
+                // Ghi lại danh sách đã được lọc cho session.
+                markSelectionChanged();
+            }
+
+            if (priceChanged) {
+                choices.forEach(input => input.checked = false);
                 errorText.textContent =
-                    "Giá vé đã thay đổi. Vui lòng kiểm tra giá và chọn lại ghế.";
+                    "Giá vé đã thay đổi. Vui lòng kiểm tra và chọn lại ghế.";
+                markSelectionChanged();
             } else if (removed.length > 0) {
                 errorText.textContent =
                     "Ghế " + removed.join(", ") +
-                    " đã được đặt hoặc ngừng sử dụng. Vui lòng chọn ghế khác.";
+                    " đã được đặt hoặc ngừng sử dụng.";
+                markSelectionChanged();
             }
 
             availability.classList.toggle(
@@ -171,10 +298,10 @@
 
             updateSummary();
         } catch {
-            if (!submitting) {
+            if (!submitting && !stopped) {
                 ready = false;
                 syncText.textContent =
-                    "Chưa cập nhật được trạng thái ghế. " +
+                    "Chưa cập nhật được dữ liệu. " +
                     "Tạm khóa đặt vé và sẽ tự thử lại.";
                 updateSummary();
             }
@@ -182,6 +309,8 @@
             clearTimeout(timeout);
             loading = false;
         }
+
+        await saveSelection();
     }
 
     choices.forEach(input => {
@@ -194,19 +323,20 @@
                     "Mỗi lần chỉ được đặt tối đa 10 ghế.";
             }
 
-            updateSummary();
+            markSelectionChanged();
+            void saveSelection();
         });
     });
 
     form.addEventListener("submit", event => {
         const count = selectedSeats().length;
 
-        if (submitting || !ready || count < 1 || count > 10) {
+        if (submitting || !ready || !restored ||
+            saving || dirty || count < 1 || count > 10) {
             event.preventDefault();
             return;
         }
 
-        // Khi tab để lâu hoặc trình duyệt tạm ngừng cập nhật.
         if (Date.now() - lastUpdated > 15000) {
             event.preventDefault();
             ready = false;
@@ -222,14 +352,15 @@
         submitButton.textContent = "Đang xử lý...";
     });
 
-    // Khi quay lại trang bằng nút Back của trình duyệt.
-    window.addEventListener("pageshow", () => {
-        submitting = false;
-        stopped = false;
-        ready = false;
-        submitButton.textContent = "Xác nhận đặt vé";
-        updateSummary();
-        void refreshSeats();
+    // Không cho chọn trước khi khôi phục xong,
+    // tránh lựa chọn của người dùng bị dữ liệu session ghi đè.
+    choices.forEach(input => input.disabled = true);
+
+    window.addEventListener("pageshow", event => {
+        if (event.persisted) {
+            // Back từ trang thành công: lấy lại dữ liệu mới từ server.
+            window.location.reload();
+        }
     });
 
     document.addEventListener("visibilitychange", () => {
@@ -245,6 +376,12 @@
             void refreshSeats();
         }
     }, 5000);
+
+    if (!token) {
+        stopWithMessage(
+            "Thiếu mã xác thực biểu mẫu. Vui lòng tải lại trang.");
+        return;
+    }
 
     updateSummary();
     void refreshSeats();
