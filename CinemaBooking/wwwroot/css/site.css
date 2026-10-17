@@ -12,13 +12,14 @@ html {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
-html {
-  position: relative;
-  min-height: 100%;
-}
-
-body {
-  margin-bottom: 60px;
+/* Viền tiêu điểm rõ ràng khi dùng bàn phím. */
+a:focus-visible,
+button:focus-visible,
+.btn-check:focus-visible + .btn,
+.form-select:focus-visible,
+summary:focus-visible {
+  outline: 3px solid #258cfb;
+  outline-offset: 2px;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
@@ -28,4 +29,132 @@ body {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
+}
+
+/* Bố cục chung */
+.skip-link {
+  position: absolute;
+  top: .5rem;
+  left: .5rem;
+  z-index: 1080;
+  padding: .5rem 1rem;
+  background: #fff;
+  border: 2px solid #258cfb;
+  border-radius: .25rem;
+}
+
+main:focus {
+  outline: none;
+}
+
+.user-name-link {
+  max-width: 16rem;
+  vertical-align: middle;
+}
+
+.text-pre-line {
+  white-space: pre-line;
+}
+
+.table-responsive > .table {
+  min-width: 640px;
+  margin-bottom: 0;
+}
+
+.table-responsive {
+  margin-bottom: 1rem;
+}
+
+/* Poster phim */
+.poster {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  background-color: #e9ecef;
+}
+
+.poster-card {
+  height: auto;
+}
+
+.poster-detail {
+  max-width: 360px;
+  margin-inline: auto;
+}
+
+/* Sơ đồ ghế */
+.seat-map {
+  padding-bottom: .5rem;
+}
+
+.seat-row-label {
+  display: inline-block;
+  width: 2.25rem;
+  flex-shrink: 0;
+}
+
+.seat-label,
+.seat-swatch {
+  width: 3.75rem;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.seat-swatch {
+  pointer-events: none;
+  padding: .25rem 0;
+  margin-right: .25rem;
+}
+
+.seat-legend li {
+  display: flex;
+  align-items: center;
+}
+
+/* Ngoài màu sắc, mỗi trạng thái có thêm dấu hiệu hình dạng. */
+.btn-check:checked + .seat-label::after,
+.seat-swatch-selected::after {
+  content: " ✓";
+}
+
+.seat-label[title="Đã đặt"],
+.seat-swatch-booked {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, .35) 0,
+    rgba(255, 255, 255, .35) 4px,
+    transparent 4px,
+    transparent 8px);
+  opacity: 1;
+}
+
+.seat-label[title="Ngừng sử dụng"],
+.seat-swatch-inactive {
+  background-color: #f8f9fa;
+  border: 2px dashed #6c757d;
+  color: #6c757d;
+  opacity: 1;
+}
+
+.seat-label[title="Ngừng sử dụng"]::after,
+.seat-swatch-inactive::after {
+  content: " ✕";
+}
+
+.screen-bar {
+  letter-spacing: .3em;
+}
+
+@media (max-width: 575.98px) {
+  .seat-label,
+  .seat-swatch {
+    width: 3.25rem;
+    padding-inline: 0;
+    font-size: .85rem;
+  }
+
+  .user-name-link {
+    max-width: 100%;
+  }
 }

@@ -8,18 +8,9 @@
 
 <div class="row g-4">
     <div class="col-md-4">
-        @if (!string.IsNullOrWhiteSpace(Model.PosterUrl))
-        {
-            <img src="@Model.PosterUrl"
-                 alt="Poster @Model.Title"
-                 class="img-fluid rounded shadow-sm" />
-        }
-        else
-        {
-            <div class="bg-light rounded p-5 text-center text-muted">
-                Chưa có poster
-            </div>
-        }
+        <partial name="_Poster"
+                 model="Model"
+                 view-data='new ViewDataDictionary(ViewData) { { "PosterClass", "poster poster-detail rounded shadow-sm" } }' />
     </div>
 
     <div class="col-md-8">
@@ -28,8 +19,7 @@
             <dd class="col-sm-9">@Model.Title</dd>
 
             <dt class="col-sm-3">Nội dung</dt>
-            <dd class="col-sm-9"
-                style="white-space: pre-line;">@Model.Description</dd>
+            <dd class="col-sm-9 text-pre-line">@Model.Description</dd>
 
             <dt class="col-sm-3">Thời lượng</dt>
             <dd class="col-sm-9">

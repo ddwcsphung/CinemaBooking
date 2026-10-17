@@ -1,0 +1,15 @@
+@model CinemaBooking.Models.Movie
+
+@{
+    // Ảnh thay thế dùng khi PosterUrl trống hoặc ảnh tải lỗi.
+    var fallback = Url.Content("~/images/no-poster.svg");
+    var hasPoster = !string.IsNullOrWhiteSpace(Model.PosterUrl);
+    var src = hasPoster ? Url.Content(Model.PosterUrl!) : fallback;
+    var cssClass = ViewData["PosterClass"] as string ?? "poster";
+}
+
+<img src="@src"
+     alt="@(hasPoster ? $"Poster phim {Model.Title}" : $"Phim {Model.Title} chưa có poster")"
+     class="@cssClass"
+     loading="lazy"
+     onerror="this.onerror=null;this.src='@fallback';this.alt='Không tải được poster phim';" />
