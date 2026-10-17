@@ -1,14 +1,14 @@
-﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Identity
 @inject SignInManager<IdentityUser> SignInManager
 
 <ul class="navbar-nav">
     @if (SignInManager.IsSignedIn(User))
     {
         <li class="nav-item">
-            <a class="nav-link text-dark text-break"
+            <a class="nav-link text-dark d-inline-block text-truncate user-name-link"
                asp-area="Identity"
                asp-page="/Account/Manage/Index"
-               title="Quản lý tài khoản">
+               title="Quản lý tài khoản (@User.Identity?.Name)">
                 Xin chào, @User.Identity?.Name
             </a>
         </li>

@@ -1,0 +1,21 @@
+@page
+@model AccessDeniedModel
+@{
+    ViewData["Title"] = "Không có quyền truy cập";
+}
+
+<h1 class="text-danger">@ViewData["Title"]</h1>
+<p>
+    Tài khoản của bạn không có quyền truy cập trang này.
+    Nếu bạn là quản trị viên, hãy đăng xuất rồi đăng nhập lại
+    bằng tài khoản quản trị.
+</p>
+
+<div class="d-flex flex-wrap gap-2">
+    <a asp-area="" asp-controller="Catalog" asp-action="Index" class="btn btn-primary">
+        Về danh sách phim
+    </a>
+    <a asp-area="" asp-controller="Bookings" asp-action="Index" class="btn btn-outline-secondary">
+        Vé của tôi
+    </a>
+</div>

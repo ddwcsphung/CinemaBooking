@@ -1,0 +1,13 @@
+@* Chỉ liên kết các chức năng đang hoạt động: email, đăng nhập ngoài,
+   xác thực hai lớp và dữ liệu cá nhân chưa được triển khai trong dự án. *@
+<ul class="nav nav-pills flex-column" aria-label="Mục quản lý tài khoản">
+    <li class="nav-item">
+        <a class="nav-link @ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index">Hồ sơ</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @ManageNavPages.ChangePasswordNavClass(ViewContext)" id="change-password" asp-page="./ChangePassword">Đổi mật khẩu</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" asp-area="" asp-controller="Bookings" asp-action="Index">Vé của tôi</a>
+    </li>
+</ul>
