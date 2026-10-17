@@ -99,6 +99,8 @@ main:focus {
   width: 3.75rem;
   flex-shrink: 0;
   position: relative;
+  padding-inline: .25rem;
+  white-space: nowrap;
 }
 
 .seat-swatch {
@@ -152,6 +154,14 @@ main:focus {
     width: 3.25rem;
     padding-inline: 0;
     font-size: .85rem;
+  }
+
+  .catalog-grid .card-body {
+    padding: .75rem;
+  }
+
+  .catalog-grid .card-title {
+    font-size: 1rem;
   }
 
   .user-name-link {

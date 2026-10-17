@@ -1,0 +1,66 @@
+@page
+@model LoginModel
+
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<div class="row justify-content-center">
+    <div class="col-sm-10 col-md-7 col-lg-5">
+        <h1 class="mb-3">@ViewData["Title"]</h1>
+
+        <section class="card shadow-sm">
+            <div class="card-body">
+                <form id="account" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                        <label asp-for="Input.Email" class="form-label"></label>
+                        <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder=" " />
+                        <label asp-for="Input.Password" class="form-label"></label>
+                        <span asp-validation-for="Input.Password" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" asp-for="Input.RememberMe" />
+                        <label class="form-check-label" asp-for="Input.RememberMe"></label>
+                    </div>
+
+                    <button id="login-submit" type="submit" class="w-100 btn btn-lg btn-primary">
+                        Đăng nhập
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <p class="mt-3">
+            Chưa có tài khoản?
+            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Đăng ký tài khoản mới</a>
+        </p>
+
+        @* Chỉ hiển thị đăng nhập ngoài khi đã cấu hình nhà cung cấp. *@
+        @if ((Model.ExternalLogins?.Count ?? 0) > 0)
+        {
+            <section class="mt-4">
+                <h2 class="h5">Hoặc đăng nhập bằng</h2>
+                <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var provider in Model.ExternalLogins!)
+                        {
+                            <button type="submit" class="btn btn-outline-primary" name="provider" value="@provider.Name" title="Đăng nhập bằng tài khoản @provider.DisplayName">@provider.DisplayName</button>
+                        }
+                    </div>
+                </form>
+            </section>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
