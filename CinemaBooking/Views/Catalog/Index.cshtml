@@ -11,6 +11,13 @@
 
 <h1 class="mb-4">Khám phá phim</h1>
 
+@if (TempData["BookingError"] is string bookingError)
+{
+    <div class="alert alert-warning" role="alert">
+        @bookingError
+    </div>
+}
+
 <form asp-controller="Catalog"
       asp-action="Index"
       method="get"

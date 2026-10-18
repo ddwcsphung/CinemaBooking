@@ -6,6 +6,13 @@
     var vi = CultureInfo.GetCultureInfo("vi-VN");
 }
 
+@if (TempData["BookingError"] is string bookingError)
+{
+    <div class="alert alert-warning" role="alert">
+        @bookingError
+    </div>
+}
+
 <a asp-controller="Catalog"
    asp-action="Index"
    class="btn btn-outline-secondary mb-4">
