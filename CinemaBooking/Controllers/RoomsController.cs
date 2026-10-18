@@ -19,7 +19,6 @@ namespace CinemaBooking.Controllers
             _logger = logger;
         }
 
-        // GET: Rooms
         public async Task<IActionResult> Index()
         {
             var rooms = await _context.Rooms
@@ -31,7 +30,6 @@ namespace CinemaBooking.Controllers
             return View(rooms);
         }
 
-        // GET: Rooms/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -52,13 +50,11 @@ namespace CinemaBooking.Controllers
             return View(room);
         }
 
-        // GET: Rooms/Create
         public IActionResult Create()
         {
             return View(new Room());
         }
 
-        // POST: Rooms/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(
@@ -85,7 +81,6 @@ namespace CinemaBooking.Controllers
             return View(room);
         }
 
-        // GET: Rooms/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -103,7 +98,6 @@ namespace CinemaBooking.Controllers
             return View(room);
         }
 
-        // POST: Rooms/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
@@ -151,7 +145,6 @@ namespace CinemaBooking.Controllers
             return View(room);
         }
 
-        // GET: Rooms/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -171,7 +164,6 @@ namespace CinemaBooking.Controllers
             return View(room);
         }
 
-        // POST: Rooms/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)

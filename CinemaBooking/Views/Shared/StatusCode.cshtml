@@ -1,7 +1,5 @@
 @model int
 @{
-    // Trang lỗi theo mã HTTP (400, 403, 404...). Backend gọi view này
-    // qua UseStatusCodePagesWithReExecute hoặc trả View("StatusCode", mã).
     var code = Model;
     var custom = ViewData["StatusMessage"] as string;
 
@@ -13,6 +11,10 @@
             "Tài khoản của bạn không được phép thực hiện thao tác này."),
         404 => ("Không tìm thấy trang",
             "Nội dung bạn tìm không tồn tại, đã bị ẩn hoặc không còn mở bán."),
+        500 => ("Đã xảy ra lỗi",
+            "Hệ thống chưa xử lý được yêu cầu. Vui lòng kiểm tra trạng thái trước khi thử lại."),
+        503 => ("Dịch vụ tạm thời gián đoạn",
+            "Hệ thống chưa kết nối được dữ liệu. Vui lòng thử lại sau ít phút."),
         _ => ("Không thể xử lý yêu cầu",
             "Hệ thống chưa xử lý được yêu cầu này. Vui lòng thử lại sau.")
     };

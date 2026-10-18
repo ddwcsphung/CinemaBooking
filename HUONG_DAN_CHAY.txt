@@ -15,10 +15,15 @@ LƯU Ý
 - Đổi email cấu hình không thu hồi quyền Admin đã cấp cho tài khoản cũ.
 - User Secrets lưu ngoài repository. Không đưa mật khẩu hoặc token vào mã nguồn.
 - Mỗi máy dùng database LocalDB riêng. GitHub không đồng bộ tài khoản, phim, phòng hoặc vé trong database.
-- Các bảng được dựng từ migration; dữ liệu nghiệp vụ mẫu cần nhập riêng.
+- Các bảng được dựng từ migration. Có thể bật DemoData trong Development để tạo dữ liệu mẫu theo README.md.
 - Giữ thư mục Migrations và ModelSnapshot trong Git; bỏ qua .vs, bin, obj và tệp database.
 
 LÀM VIỆC NHÓM
 - Pull nhánh master trước khi tạo nhánh chức năng.
 - Mỗi chức năng làm trên một branch riêng; commit và push rồi tạo pull request để bạn khác xem trước khi merge.
 - Thống nhất thay đổi Model và migration trước khi làm; sau khi pull migration mới, chạy Update-Database.
+
+KIỂM THỬ VÀ DỮ LIỆU DEMO
+- Xem README.md để bật seeder theo ngày hiện tại và tạo 3 tài khoản demo trên database riêng.
+- Chạy dotnet run --project tests/CinemaBooking.SmokeTests để kiểm thử bằng SQL Server và HTTP thật.
+- Xem docs/kien-truc.md và docs/kiem-thu.md cho quy tắc, API, ERD và kịch bản demo.

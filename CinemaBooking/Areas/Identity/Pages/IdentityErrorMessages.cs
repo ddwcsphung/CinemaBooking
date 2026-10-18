@@ -2,8 +2,6 @@ using Microsoft.AspNetCore.Identity;
 
 namespace CinemaBooking.Areas.Identity.Pages;
 
-// Việt hóa thông báo lỗi Identity hiển thị trên các trang tài khoản.
-// Mã lỗi không có trong danh sách giữ nguyên mô tả gốc của Identity.
 public static class IdentityErrorMessages
 {
     public static string Translate(IdentityError error) => error.Code switch

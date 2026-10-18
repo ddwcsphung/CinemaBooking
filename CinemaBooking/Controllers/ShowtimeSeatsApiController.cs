@@ -1,4 +1,4 @@
-﻿using CinemaBooking.Data;
+using CinemaBooking.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +17,6 @@ public class ShowtimeSeatsApiController : ControllerBase
         _context = context;
     }
 
-    // GET: /api/showtimes/3/seats
     [HttpGet("{showtimeId:int}/seats")]
     [ResponseCache(
         NoStore = true,

@@ -1,5 +1,7 @@
 # Ảnh poster
 
+Các file `demo-01.jpg` đến `demo-10.jpg` là ảnh minh họa gốc cho phim hư cấu của `DemoDataSeeder`.
+
 Đặt ảnh poster (có quyền sử dụng) vào thư mục này, ví dụ `ten-phim.jpg`.
 
 Trong trang Quản trị → Sửa phim, nhập trường **Đường dẫn ảnh poster** dạng đường dẫn tương đối:

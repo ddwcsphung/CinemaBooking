@@ -1,4 +1,4 @@
-﻿using CinemaBooking.Models;
+using CinemaBooking.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CinemaBooking.ViewModels;

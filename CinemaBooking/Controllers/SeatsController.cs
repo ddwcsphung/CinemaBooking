@@ -21,7 +21,6 @@ public class SeatsController : Controller
         _logger = logger;
     }
 
-    // GET: Seats?roomId=1
     public async Task<IActionResult> Index(int roomId)
     {
         var room = await _context.Rooms
@@ -37,14 +36,13 @@ public class SeatsController : Controller
         return View(room);
     }
 
-    // POST: Seats/SetActive
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SetActive(int id, bool? isActive)
     {
         if (id <= 0 || !isActive.HasValue)
         {
-            return BadRequest("Thông tin cập nhật ghế không hợp lệ.");
+            return BadRequest();
         }
 
         int? roomId = null;
@@ -65,7 +63,6 @@ public class SeatsController : Controller
 
             roomId = seat.RoomId;
 
-            // Nếu trạng thái đã đúng thì không thay đổi nữa.
             if (seat.IsActive == isActive.Value)
             {
                 TempData["SeatMessage"] =
@@ -76,7 +73,6 @@ public class SeatsController : Controller
                     new { roomId = seat.RoomId });
             }
 
-            // Kiểm tra vé trước khi tắt ghế.
             if (!isActive.Value)
             {
                 var now = DateTimeOffset.UtcNow
@@ -140,7 +136,6 @@ public class SeatsController : Controller
         return RedirectToAction("Index", "Rooms");
     }
 
-    // GET: Seats/Generate?roomId=1
     public async Task<IActionResult> Generate(int roomId)
     {
         var room = await _context.Rooms
@@ -168,7 +163,6 @@ public class SeatsController : Controller
         });
     }
 
-    // POST: Seats/Generate
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Generate(
@@ -222,7 +216,6 @@ public class SeatsController : Controller
 
         try
         {
-            // Lưu tất cả ghế trong một lần.
             await _context.SaveChangesAsync();
         }
         catch (Exception ex) when (ex is DbUpdateException or SqlException)

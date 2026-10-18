@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CinemaBooking.Filters;
 
-// Local action handlers keep form values. This filter covers failures outside those handlers.
 public sealed class BackendExceptionFilter(ILogger<BackendExceptionFilter> logger) : IExceptionFilter
 {
     public void OnException(ExceptionContext context)
@@ -33,11 +32,17 @@ public sealed class BackendExceptionFilter(ILogger<BackendExceptionFilter> logge
 
         context.Result = isApi
             ? new ObjectResult(new { message }) { StatusCode = status }
-            : new ContentResult
+            : new ViewResult
             {
-                Content = message,
-                ContentType = "text/plain; charset=utf-8",
-                StatusCode = status
+                ViewName = "StatusCode",
+                StatusCode = status,
+                ViewData = new Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary<int>(
+                    new Microsoft.AspNetCore.Mvc.ModelBinding.EmptyModelMetadataProvider(),
+                    context.ModelState)
+                {
+                    Model = status,
+                    ["StatusMessage"] = message
+                }
             };
         context.ExceptionHandled = true;
     }

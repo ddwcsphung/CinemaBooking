@@ -14,7 +14,6 @@
     const availability = document.getElementById("availability-message");
     const submitButton = document.getElementById("submit-booking");
 
-    // Form POST của Razor tự sinh trường chống giả mạo yêu cầu.
     const token = form.querySelector(
         'input[name="__RequestVerificationToken"]'
     )?.value;
@@ -112,7 +111,6 @@
         updateSummary();
 
         try {
-            // Gửi lần lượt, tránh các lần chọn nhanh ghi đè sai thứ tự.
             while (dirty && !submitting && !stopped) {
                 const sentRevision = revision;
                 const ids = selectedSeats().map(input => Number(input.value));
@@ -140,8 +138,6 @@
                     throw new Error("Dữ liệu lựa chọn không hợp lệ.");
                 }
 
-                // Người dùng đã chọn tiếp trong lúc gửi:
-                // gửi lại lựa chọn mới nhất, không áp dụng phản hồi cũ.
                 if (sentRevision !== revision) {
                     continue;
                 }
@@ -218,8 +214,6 @@
                 return;
             }
 
-            // Chỉ đọc session khi bắt đầu trang.
-            // Không đọc lại mỗi 5 giây vì có thể ghi đè lựa chọn đang thao tác.
             let saved = null;
 
             if (!restored) {
@@ -280,7 +274,6 @@
                         "hoặc đã ngừng sử dụng nên không được khôi phục.";
                 }
 
-                // Ghi lại danh sách đã được lọc cho session.
                 markSelectionChanged();
             }
 
@@ -365,13 +358,10 @@
         submitButton.textContent = "Đang xử lý...";
     });
 
-    // Không cho chọn trước khi khôi phục xong,
-    // tránh lựa chọn của người dùng bị dữ liệu session ghi đè.
     choices.forEach(input => input.disabled = true);
 
     window.addEventListener("pageshow", event => {
         if (event.persisted) {
-            // Back từ trang thành công: lấy lại dữ liệu mới từ server.
             window.location.reload();
         }
     });

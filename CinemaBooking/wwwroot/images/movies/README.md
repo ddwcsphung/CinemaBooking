@@ -1,7 +1,7 @@
 # Ảnh poster theo dữ liệu mẫu của nhóm
 
 Dữ liệu mẫu (file `CinemaBooking.bak`) đặt `PosterUrl` của phim theo dạng `/images/movies/<tên-file>.jpg`.
-Đặt ảnh (có quyền sử dụng) vào thư mục này với đúng các tên sau để poster hiển thị:
+Repo đã có ảnh minh họa gốc tại các đường dẫn dưới đây để dữ liệu cũ hiển thị được. Đây không phải poster chính thức của phim; có thể thay bằng ảnh có quyền sử dụng. Xem `../ASSETS.md`.
 
 | Phim | Tên file |
 |---|---|

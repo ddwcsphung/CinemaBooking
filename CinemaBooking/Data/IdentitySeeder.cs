@@ -12,7 +12,6 @@ public static class IdentitySeeder
         var userManager =
             services.GetRequiredService<UserManager<IdentityUser>>();
 
-        // Tạo các vai trò nếu chưa tồn tại.
         string[] roles = { "Admin", "Customer" };
 
         foreach (var roleName in roles)
@@ -26,7 +25,6 @@ public static class IdentitySeeder
             }
         }
 
-        // Mỗi máy cấu hình email Admin riêng bằng User Secrets.
         var configuration = services.GetRequiredService<IConfiguration>();
         var adminEmail = configuration["SeedAdmin:Email"]?.Trim();
 
@@ -39,11 +37,9 @@ public static class IdentitySeeder
 
         if (adminUser == null)
         {
-            // Cho phép mở website để đăng ký; lần khởi động sau sẽ gán quyền.
             return;
         }
 
-        // Chỉ gán Admin nếu tài khoản chưa có vai trò này.
         if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
         {
             var result = await userManager.AddToRoleAsync(

@@ -24,7 +24,6 @@ public class ShowtimesController : Controller
         _logger = logger;
     }
 
-    // Quy ước lịch chiếu của rạp dùng giờ Việt Nam (UTC+7).
     private static DateTime CinemaNow =>
         DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7)).DateTime;
 
@@ -59,7 +58,6 @@ public class ShowtimesController : Controller
         {
             var startTime = model.StartTime.Value;
 
-
             if (startTime <= CinemaNow)
             {
                 ModelState.AddModelError(
@@ -67,8 +65,6 @@ public class ShowtimesController : Controller
                     "Giờ bắt đầu phải nằm trong tương lai.");
             }
 
-            // Chừa khoảng thời gian để cộng thời lượng phim
-            // và 15 phút dọn phòng mà không vượt giới hạn DateTime.
             if (startTime >= new DateTime(9999, 12, 31))
             {
                 ModelState.AddModelError(
@@ -85,7 +81,6 @@ public class ShowtimesController : Controller
 
         try
         {
-            // Giữ cả mở giao dịch, kiểm tra lịch và lưu suất trong phạm vi xử lý lỗi.
             await using var transaction =
                 await _context.Database.BeginTransactionAsync(
                     IsolationLevel.Serializable);
@@ -136,7 +131,6 @@ public class ShowtimesController : Controller
                 var newRoomAvailableTime =
                     endTime.AddMinutes(CleaningMinutes);
 
-                // Kiểm tra cả suất tạm đóng bán vì vẫn chiếm lịch phòng.
                 var overlaps = await _context.Showtimes.AnyAsync(s =>
                     s.RoomId == model.RoomId &&
                     s.StartTime < newRoomAvailableTime &&
@@ -202,20 +196,21 @@ public class ShowtimesController : Controller
         return View(model);
     }
 
-    // POST: Showtimes/SetSale/5
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SetSale(int id, bool? isActive)
     {
         if (id <= 0 || !isActive.HasValue || !ModelState.IsValid)
         {
-            return BadRequest("Thông tin đóng/mở bán không hợp lệ.");
+            return BadRequest();
         }
 
         try
         {
             await using var transaction =
                 await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+
+            await ShowtimeLock.AcquireAsync(_context, id);
 
             var showtime = await _context.Showtimes
                 .Include(s => s.Movie)
@@ -282,7 +277,6 @@ public class ShowtimesController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // POST: Showtimes/Delete/5
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
@@ -294,7 +288,6 @@ public class ShowtimesController : Controller
             return NotFound();
         }
 
-        // Giữ lại lịch sử các suất đã bắt đầu.
         if (showtime.StartTime <= CinemaNow)
         {
             TempData["ShowtimeError"] =
@@ -335,7 +328,6 @@ public class ShowtimesController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // GET: /Showtimes/Edit/5
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
@@ -372,7 +364,6 @@ public class ShowtimesController : Controller
         return View(model);
     }
 
-    // POST: /Showtimes/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(
@@ -406,11 +397,11 @@ public class ShowtimesController : Controller
 
         try
         {
-            // Kiểm tra điều kiện và lưu trong cùng giao dịch.
-            // Đặt vé đồng thời không được làm thay đổi vé đã tạo.
             await using var transaction =
                 await _context.Database.BeginTransactionAsync(
                     IsolationLevel.Serializable);
+
+            await ShowtimeLock.AcquireAsync(_context, id);
 
             var showtime = await _context.Showtimes
                 .FirstOrDefaultAsync(s => s.Id == id);
@@ -420,7 +411,6 @@ public class ShowtimesController : Controller
                 return NotFound();
             }
 
-            // Phải kiểm tra lại khi lưu vì có thể vừa phát sinh đơn.
             if (showtime.StartTime <= CinemaNow ||
                 await _context.Bookings.AnyAsync(b => b.ShowtimeId == id))
             {
@@ -519,7 +509,6 @@ public class ShowtimesController : Controller
                 }
             }
 
-            // Khi ra khỏi khối try, giao dịch chưa commit sẽ được hủy.
         }
         catch (Exception ex)
             when (ex.GetBaseException() is SqlException sql &&

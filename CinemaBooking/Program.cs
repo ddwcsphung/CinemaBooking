@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
@@ -27,7 +26,6 @@ builder.Services.AddControllersWithViews(options =>
             });
     });
 
-// Lưu dữ liệu session trong bộ nhớ của ứng dụng.
 builder.Services.AddDistributedMemoryCache();
 
 builder.Services.AddSession(options =>
@@ -42,15 +40,18 @@ builder.Services.AddSession(options =>
 
 var app = builder.Build();
 
-// Khởi tạo tài khoản quản trị trên máy phát triển.
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
 
+    if (builder.Configuration.GetValue<bool>("DemoData:Enabled"))
+    {
+        await DemoDataSeeder.SeedAsync(scope.ServiceProvider);
+    }
+
     await IdentitySeeder.SeedAsync(scope.ServiceProvider);
 }
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -58,9 +59,12 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
+app.UseWhen(
+    context => !context.Request.Path.StartsWithSegments("/api"),
+    branch => branch.UseStatusCodePagesWithReExecute("/Home/StatusCode", "?code={0}"));
 
 app.UseHttpsRedirection();
 app.UseRouting();

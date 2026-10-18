@@ -1,7 +1,6 @@
 @model CinemaBooking.Models.Movie
 
 @{
-    // Ảnh thay thế dùng khi PosterUrl trống hoặc ảnh tải lỗi.
     var fallback = Url.Content("~/images/no-poster.svg");
     var hasPoster = !string.IsNullOrWhiteSpace(Model.PosterUrl);
     var src = hasPoster ? Url.Content(Model.PosterUrl!) : fallback;

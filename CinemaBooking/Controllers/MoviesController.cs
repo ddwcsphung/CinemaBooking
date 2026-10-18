@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
-
 namespace CinemaBooking.Controllers
 {
     [Authorize(Roles = "Admin")]
@@ -22,7 +21,6 @@ namespace CinemaBooking.Controllers
             _logger = logger;
         }
 
-        // GET: Movies
         public async Task<IActionResult> Index()
         {
             var movies = await _context.Movies
@@ -34,7 +32,6 @@ namespace CinemaBooking.Controllers
             return View(movies);
         }
 
-        // GET: Movies/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -55,7 +52,6 @@ namespace CinemaBooking.Controllers
             return View(movie);
         }
 
-        // GET: Movies/Create
         public async Task<IActionResult> Create()
         {
             await LoadGenresAsync(Array.Empty<int>());
@@ -63,7 +59,6 @@ namespace CinemaBooking.Controllers
             return View(new Movie());
         }
 
-        // POST: Movies/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(
@@ -98,7 +93,6 @@ namespace CinemaBooking.Controllers
             return View(movie);
         }
 
-        // GET: Movies/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -124,7 +118,6 @@ namespace CinemaBooking.Controllers
             return View(movie);
         }
 
-        // POST: Movies/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
@@ -138,7 +131,6 @@ namespace CinemaBooking.Controllers
                 return NotFound();
             }
 
-            // Kiểm tra các trường nhập trước khi mở giao dịch.
             if (!ModelState.IsValid)
             {
                 await LoadGenresAsync(selectedGenreIds);
@@ -147,7 +139,6 @@ namespace CinemaBooking.Controllers
 
             try
             {
-                // Giữ việc kiểm tra lịch và sửa phim trong cùng giao dịch.
                 await using var transaction =
                     await _context.Database.BeginTransactionAsync(
                         IsolationLevel.Serializable);
@@ -163,7 +154,6 @@ namespace CinemaBooking.Controllers
 
                 var genres = await ValidateGenresAsync(selectedGenreIds);
 
-                // Không cho ngày khởi chiếu muộn hơn suất chiếu sớm nhất.
                 var earliestStartTime = await _context.Showtimes
                     .Where(s => s.MovieId == id)
                     .Select(s => (DateTime?)s.StartTime)
@@ -178,7 +168,6 @@ namespace CinemaBooking.Controllers
                         $"{earliestStartTime.Value:dd/MM/yyyy} " +
                         "vì phim đã có suất chiếu vào ngày này.");
                 }
-
 
                 if (movie.DurationMinutes != existingMovie.DurationMinutes)
                 {
@@ -256,7 +245,6 @@ namespace CinemaBooking.Controllers
             return View(movie);
         }
 
-        // GET: Movies/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -277,7 +265,6 @@ namespace CinemaBooking.Controllers
             return View(movie);
         }
 
-        // POST: Movies/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -335,7 +322,6 @@ namespace CinemaBooking.Controllers
             return View("Delete", movie);
         }
 
-        // Nạp danh sách lựa chọn và đánh dấu các thể loại đã chọn.
         private async Task LoadGenresAsync(int[] selectedGenreIds)
         {
             var genres = await _context.Genres
@@ -350,7 +336,6 @@ namespace CinemaBooking.Controllers
                 selectedGenreIds);
         }
 
-        // Kiểm tra các mã thể loại gửi từ biểu mẫu.
         private async Task<List<Genre>> ValidateGenresAsync(
             int[] selectedGenreIds)
         {

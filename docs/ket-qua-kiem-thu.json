@@ -1,0 +1,250 @@
+[
+  {
+    "name": "Migration v\u00E0 demo seed ch\u1EA1y l\u1EA1i kh\u00F4ng t\u1EA1o tr\u00F9ng",
+    "passed": true
+  },
+  {
+    "name": "\u00C1p d\u1EE5ng \u0111\u1EA7y \u0111\u1EE7 migration",
+    "passed": true
+  },
+  {
+    "name": "\u0110\u0103ng nh\u1EADp demo.a@example.com",
+    "passed": true
+  },
+  {
+    "name": "\u0110\u0103ng nh\u1EADp demo.b@example.com",
+    "passed": true
+  },
+  {
+    "name": "\u0110\u0103ng nh\u1EADp demo.admin@example.com",
+    "passed": true
+  },
+  {
+    "name": "\u0110\u0103ng nh\u1EADp demo.admin@example.com",
+    "passed": true
+  },
+  {
+    "name": "Ng\u00E0y sai tr\u1EA3 400 c\u00F3 layout",
+    "passed": true
+  },
+  {
+    "name": "URL kh\u00F4ng t\u1ED3n t\u1EA1i tr\u1EA3 404 c\u00F3 layout",
+    "passed": true
+  },
+  {
+    "name": "API ch\u01B0a \u0111\u0103ng nh\u1EADp tr\u1EA3 401",
+    "passed": true
+  },
+  {
+    "name": "API kh\u00F4ng b\u1ECB \u0111\u1ED5i th\u00E0nh HTML trang l\u1ED7i",
+    "passed": true
+  },
+  {
+    "name": "Kh\u00E1ch ch\u01B0a \u0111\u0103ng nh\u1EADp b\u1ECB y\u00EAu c\u1EA7u \u0111\u0103ng nh\u1EADp",
+    "passed": true
+  },
+  {
+    "name": "Kh\u00E1ch th\u01B0\u1EDDng kh\u00F4ng m\u1EDF \u0111\u01B0\u1EE3c qu\u1EA3n tr\u1ECB",
+    "passed": true
+  },
+  {
+    "name": "Poster 501 k\u00FD t\u1EF1 b\u00E1o l\u1ED7i ti\u1EBFng Vi\u1EC7t",
+    "passed": true
+  },
+  {
+    "name": "Poster kh\u00F4ng h\u1EE3p l\u1EC7 kh\u00F4ng t\u1EA1o phim",
+    "passed": true
+  },
+  {
+    "name": "POST qu\u1EA3n tr\u1ECB thi\u1EBFu antiforgery b\u1ECB ch\u1EB7n",
+    "passed": true
+  },
+  {
+    "name": "Ch\u1EB7n JSON selection {}",
+    "passed": true
+  },
+  {
+    "name": "Ch\u1EB7n JSON selection {\u0022seatIds\u0022:null}",
+    "passed": true
+  },
+  {
+    "name": "Ch\u1EB7n JSON selection {\u0022seatIds\u0022:[-1]}",
+    "passed": true
+  },
+  {
+    "name": "Ch\u1EB7n JSON selection {\u0022seatIds\u0022:[0]}",
+    "passed": true
+  },
+  {
+    "name": "Ch\u1EB7n JSON selection {\u0022seatIds\u0022:[1,1]}",
+    "passed": true
+  },
+  {
+    "name": "Ch\u1EB7n JSON selection {",
+    "passed": true
+  },
+  {
+    "name": "Ch\u1EB7n JSON selection {\u0022seatIds\u0022:[1,2,3,4,5,6,7,8,9,10,11]}",
+    "passed": true
+  },
+  {
+    "name": "POST selection thi\u1EBFu token b\u1ECB ch\u1EB7n",
+    "passed": true
+  },
+  {
+    "name": "L\u01B0u l\u1EF1a ch\u1ECDn h\u1EE3p l\u1EC7",
+    "passed": true
+  },
+  {
+    "name": "Kh\u00F4i ph\u1EE5c \u0111\u00FAng l\u1EF1a ch\u1ECDn",
+    "passed": true
+  },
+  {
+    "name": "L\u1EF1a ch\u1ECDn kh\u00F4ng l\u1ED9 sang t\u00E0i kho\u1EA3n B",
+    "passed": true
+  },
+  {
+    "name": "Body thi\u1EBFu tr\u01B0\u1EDDng kh\u00F4ng x\u00F3a l\u1EF1a ch\u1ECDn c\u0169",
+    "passed": true
+  },
+  {
+    "name": "Kh\u00F4i ph\u1EE5c lo\u1EA1i gh\u1EBF b\u1ECB t\u1EAFt",
+    "passed": true
+  },
+  {
+    "name": "Danh s\u00E1ch r\u1ED7ng x\u00F3a l\u1EF1a ch\u1ECDn",
+    "passed": true
+  },
+  {
+    "name": "Gh\u1EBF kh\u00E1c nhau c\u00F9ng su\u1EA5t l\u01B0\u1EE3t 1",
+    "passed": true
+  },
+  {
+    "name": "Gh\u1EBF kh\u00E1c nhau c\u00F9ng su\u1EA5t l\u01B0\u1EE3t 2",
+    "passed": true
+  },
+  {
+    "name": "Gh\u1EBF kh\u00E1c nhau c\u00F9ng su\u1EA5t l\u01B0\u1EE3t 3",
+    "passed": true
+  },
+  {
+    "name": "Gh\u1EBF kh\u00E1c nhau c\u00F9ng su\u1EA5t l\u01B0\u1EE3t 4",
+    "passed": true
+  },
+  {
+    "name": "Gh\u1EBF kh\u00E1c nhau c\u00F9ng su\u1EA5t l\u01B0\u1EE3t 5",
+    "passed": true
+  },
+  {
+    "name": "Gh\u1EBF kh\u00E1c nhau c\u00F9ng su\u1EA5t l\u01B0\u1EE3t 6",
+    "passed": true
+  },
+  {
+    "name": "Gh\u1EBF kh\u00E1c nhau c\u00F9ng su\u1EA5t l\u01B0\u1EE3t 7",
+    "passed": true
+  },
+  {
+    "name": "Gh\u1EBF kh\u00E1c nhau c\u00F9ng su\u1EA5t l\u01B0\u1EE3t 8",
+    "passed": true
+  },
+  {
+    "name": "Gh\u1EBF kh\u00E1c nhau c\u00F9ng su\u1EA5t l\u01B0\u1EE3t 9",
+    "passed": true
+  },
+  {
+    "name": "Gh\u1EBF kh\u00E1c nhau c\u00F9ng su\u1EA5t l\u01B0\u1EE3t 10",
+    "passed": true
+  },
+  {
+    "name": "C\u00F9ng gh\u1EBF ch\u1EC9 m\u1ED9t \u0111\u01A1n th\u00E0nh c\u00F4ng",
+    "passed": true
+  },
+  {
+    "name": "C\u00F9ng gh\u1EBF v\u1EADt l\u00FD \u1EDF hai su\u1EA5t \u0111\u1EC1u \u0111\u1EB7t \u0111\u01B0\u1EE3c",
+    "passed": true
+  },
+  {
+    "name": "\u0110\u1EB7t v\u00E9 h\u1EE3p l\u1EC7",
+    "passed": true
+  },
+  {
+    "name": "Gi\u00E1 l\u1EA5y t\u1EEB server",
+    "passed": true
+  },
+  {
+    "name": "\u0110\u1EB7t xong x\u00F3a session",
+    "passed": true
+  },
+  {
+    "name": "Ng\u00E0y \u0111\u1EB7t kh\u00F4ng in m\u00E3 CSharp",
+    "passed": true
+  },
+  {
+    "name": "B kh\u00F4ng xem \u0111\u01B0\u1EE3c \u0111\u01A1n c\u1EE7a A",
+    "passed": true
+  },
+  {
+    "name": "Kh\u00E1ch kh\u00F4ng x\u00E1c nh\u1EADn \u0111\u01B0\u1EE3c thanh to\u00E1n",
+    "passed": true
+  },
+  {
+    "name": "Hai Admin x\u00E1c nh\u1EADn c\u00F9ng \u0111\u01A1n an to\u00E0n",
+    "passed": true
+  },
+  {
+    "name": "X\u00E1c nh\u1EADn l\u1EA1i kh\u00F4ng t\u1EA1o \u0111\u01A1n m\u1EDBi",
+    "passed": true
+  },
+  {
+    "name": "Admin \u0111\u00F3ng b\u00E1n",
+    "passed": true
+  },
+  {
+    "name": "\u0110\u00F3ng b\u00E1n l\u1EB7p kh\u00F4ng \u0111\u1EA3o l\u1EA1i",
+    "passed": true
+  },
+  {
+    "name": "Su\u1EA5t \u0111\u00F3ng b\u00E1n chuy\u1EC3n v\u1EC1 Catalog",
+    "passed": true
+  },
+  {
+    "name": "Th\u00F4ng b\u00E1o l\u1ED7i \u0111\u1EB7t v\u00E9 hi\u1EC7n tr\u00EAn Catalog",
+    "passed": true
+  },
+  {
+    "name": "Su\u1EA5t \u0111\u00F3ng b\u00E1n kh\u00F4ng m\u1EDF form \u0111\u1EB7t v\u00E9",
+    "passed": true
+  },
+  {
+    "name": "Kh\u00F4ng s\u1EEDa su\u1EA5t c\u00F3 \u0111\u01A1n",
+    "passed": true
+  },
+  {
+    "name": "Kh\u00F4ng x\u00F3a su\u1EA5t c\u00F3 \u0111\u01A1n",
+    "passed": true
+  },
+  {
+    "name": "Kh\u00F4ng c\u00F3 gh\u1EBF tr\u00F9ng trong database",
+    "passed": true
+  },
+  {
+    "name": "L\u1ED7i ghi gi\u1EEFa giao d\u1ECBch rollback to\u00E0n b\u1ED9",
+    "passed": true
+  },
+  {
+    "name": "Poster d\u1EEF li\u1EC7u c\u0169 tr\u1EA3 \u1EA3nh JPEG",
+    "passed": true
+  },
+  {
+    "name": "Catalog c\u00F3 poster v\u00E0 b\u1ED9 l\u1ECDc",
+    "passed": true
+  },
+  {
+    "name": "Trang t\u00E0i kho\u1EA3n ti\u1EBFng Vi\u1EC7t",
+    "passed": true
+  },
+  {
+    "name": "Ph\u00F2ng kh\u00F4ng c\u00F2n gh\u1EBF ho\u1EA1t \u0111\u1ED9ng kh\u00F4ng m\u1EDF \u0111\u1EB7t v\u00E9",
+    "passed": true
+  }
+]

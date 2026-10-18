@@ -11,6 +11,15 @@ namespace CinemaBooking.Controllers
             return RedirectToAction("Index", "Catalog");
         }
 
+        [ActionName("StatusCode")]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult StatusCodePage(int code)
+        {
+            code = code is >= 400 and <= 599 ? code : 404;
+            Response.StatusCode = code;
+            return View("StatusCode", code);
+        }
+
         public IActionResult Privacy()
         {
             return View();
