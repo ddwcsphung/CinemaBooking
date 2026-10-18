@@ -1,13 +1,22 @@
-﻿@model CinemaBooking.ViewModels.MovieCatalogViewModel
+@model CinemaBooking.ViewModels.MovieCatalogViewModel
 
 @{
     ViewData["Title"] = "Khám phá phim";
 
     var firstPage = Math.Max(1, Model.Page - 2);
     var lastPage = Math.Min(Model.TotalPages, Model.Page + 2);
+    var hasFilter = !string.IsNullOrWhiteSpace(Model.Keyword)
+        || Model.GenreId.HasValue;
 }
 
 <h1 class="mb-4">Khám phá phim</h1>
+
+@if (TempData["BookingError"] is string bookingError)
+{
+    <div class="alert alert-warning" role="alert">
+        @bookingError
+    </div>
+}
 
 <form asp-controller="Catalog"
       asp-action="Index"
@@ -20,6 +29,7 @@
         </label>
 
         <input asp-for="Keyword"
+               type="search"
                class="form-control"
                placeholder="Nhập tên phim..." />
     </div>
@@ -43,52 +53,60 @@
     </div>
 </form>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <span>Tìm thấy @Model.TotalItems phim</span>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <span role="status">Tìm thấy @Model.TotalItems phim</span>
 
-    <a asp-controller="Catalog"
-       asp-action="Index"
-       class="btn btn-outline-secondary btn-sm">
-        Xóa bộ lọc
-    </a>
+    @if (hasFilter)
+    {
+        <a asp-controller="Catalog"
+           asp-action="Index"
+           class="btn btn-outline-secondary btn-sm">
+            Xóa bộ lọc
+        </a>
+    }
 </div>
 
 @if (Model.Movies.Count == 0)
 {
-    <div class="alert alert-info">
-        Không có phim phù hợp. Bạn hãy thử từ khóa hoặc thể loại khác.
+    <div class="alert alert-info" role="status">
+        @if (hasFilter)
+        {
+            <p class="mb-2">
+                Không có phim phù hợp với bộ lọc hiện tại.
+                Bạn hãy thử từ khóa hoặc thể loại khác.
+            </p>
+            <a asp-controller="Catalog"
+               asp-action="Index"
+               class="btn btn-sm btn-outline-primary">
+                Xem tất cả phim
+            </a>
+        }
+        else
+        {
+            <span>Hiện chưa có phim nào đang chiếu. Vui lòng quay lại sau.</span>
+        }
     </div>
 }
 else
 {
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
+    <div class="catalog-grid row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3 g-md-4">
         @foreach (var movie in Model.Movies)
         {
             <div class="col">
                 <article class="card h-100 shadow-sm">
-                    @if (!string.IsNullOrWhiteSpace(movie.PosterUrl))
-                    {
-                        <img src="@movie.PosterUrl"
-                             alt="Poster @movie.Title"
-                             class="card-img-top"
-                             loading="lazy"
-                             style="height: 320px; object-fit: cover;" />
-                    }
-                    else
-                    {
-                        <div class="bg-light d-flex align-items-center
-                            justify-content-center text-secondary"
-                             style="height: 320px;">
-                            Chưa có poster
-                        </div>
-                    }
+                    <partial name="_Poster"
+                             model="movie"
+                             view-data='new ViewDataDictionary(ViewData) { { "PosterClass", "card-img-top poster poster-card" } }' />
 
                     <div class="card-body d-flex flex-column">
                         <h2 class="h5 card-title">@movie.Title</h2>
 
-                        <p class="text-muted small mb-2">
-                            @string.Join(", ", movie.Genres.Select(g => g.Name))
-                        </p>
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            @foreach (var genre in movie.Genres.OrderBy(g => g.Name))
+                            {
+                                <span class="badge text-bg-light border">@genre.Name</span>
+                            }
+                        </div>
 
                         <p class="mb-1">
                             Thời lượng: @movie.DurationMinutes phút
@@ -130,7 +148,8 @@ else
 
                 @for (var p = firstPage; p <= lastPage; p++)
                 {
-                    <li class="page-item @(p == Model.Page ? "active" : "")">
+                    <li class="page-item @(p == Model.Page ? "active" : "")"
+                        aria-current="@(p == Model.Page ? "page" : null)">
                         <a class="page-link"
                            asp-action="Index"
                            asp-route-page="@p"

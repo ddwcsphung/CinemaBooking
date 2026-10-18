@@ -1,0 +1,29 @@
+@page
+@model LogoutModel
+@{
+    ViewData["Title"] = "Đăng xuất";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (User.Identity?.IsAuthenticated ?? false)
+{
+    <p>Bạn có muốn đăng xuất khỏi CinemaBooking?</p>
+
+    <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Catalog", new { area = "" })" method="post">
+        <button type="submit" class="btn btn-primary">Đăng xuất</button>
+    </form>
+}
+else
+{
+    <p>Bạn đã đăng xuất thành công.</p>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-area="" asp-controller="Catalog" asp-action="Index" class="btn btn-primary">
+            Về danh sách phim
+        </a>
+        <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-outline-secondary">
+            Đăng nhập lại
+        </a>
+    </div>
+}

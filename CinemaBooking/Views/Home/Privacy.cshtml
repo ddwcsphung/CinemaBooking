@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Thông tin riêng tư";
 }
 
@@ -46,6 +46,29 @@
                 đăng nhập. Khi dùng máy tính chung, hãy đăng xuất
                 sau khi sử dụng.
             </p>
+        </section>
+
+        <section class="mb-4">
+            <h2 class="h4">Session lựa chọn ghế tạm</h2>
+            <p>
+                Khi bạn chọn ghế, hệ thống lưu tạm danh sách ghế đang chọn
+                trong session phía máy chủ (cookie
+                <code>.CinemaBooking.Session</code>) để khôi phục khi tải lại trang.
+            </p>
+            <ul>
+                <li>
+                    Lựa chọn tạm <strong>không giữ chỗ</strong>: người khác
+                    vẫn có thể đặt ghế đó cho đến khi bạn xác nhận đặt vé
+                    thành công.
+                </li>
+                <li>
+                    Session hết hạn sau khoảng 20 phút không hoạt động;
+                    khi đó lựa chọn tạm bị xóa.
+                </li>
+                <li>
+                    Bỏ chọn toàn bộ ghế sẽ xóa lựa chọn tạm của suất chiếu đó.
+                </li>
+            </ul>
         </section>
 
         <section class="mb-4">

@@ -1,4 +1,4 @@
-﻿@model CinemaBooking.ViewModels.BookingCreateViewModel
+@model CinemaBooking.ViewModels.BookingCreateViewModel
 @using System.Globalization
 
 @{
@@ -10,25 +10,26 @@
 
 <h1 class="mb-3">Chọn ghế</h1>
 
-<div class="mb-4">
-    <h2 class="h4">@Model.MovieTitle</h2>
+<section class="card shadow-sm mb-4" aria-labelledby="showtime-title">
+    <div class="card-body">
+        <h2 id="showtime-title" class="h4 mb-3">@Model.MovieTitle</h2>
 
-    <p class="mb-1">
-        Phòng: <strong>@Model.RoomName</strong>
-    </p>
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Phòng</dt>
+            <dd class="col-sm-9">@Model.RoomName</dd>
 
-    <p class="mb-1">
-        Suất chiếu:
-        <strong>
-            @Model.StartTime.ToString("HH:mm dd/MM/yyyy")
-        </strong>
-    </p>
+            <dt class="col-sm-3">Suất chiếu</dt>
+            <dd class="col-sm-9">
+                @Model.StartTime.ToString("HH:mm dd/MM/yyyy")
+            </dd>
 
-    <p>
-        Giá mỗi ghế:
-        <strong id="unit-price">@Model.BasePrice.ToString("N0", vi) đ</strong>
-    </p>
-</div>
+            <dt class="col-sm-3">Giá mỗi ghế</dt>
+            <dd class="col-sm-9 mb-0">
+                <strong id="unit-price">@Model.BasePrice.ToString("N0", vi) đ</strong>
+            </dd>
+        </dl>
+    </div>
+</section>
 
 @if (TempData["BookingError"] is string error)
 {
@@ -38,8 +39,9 @@
 }
 
 <div class="alert alert-info">
-    Chọn tối đa 10 ghế. Ghế chỉ được đặt sau khi xác nhận thành công.
-    Thanh toán tại quầy.
+    Chọn tối đa 10 ghế. Ghế chỉ được giữ cho bạn sau khi
+    xác nhận đặt vé thành công; việc chọn ghế không giữ chỗ.
+    Thanh toán tại quầy bằng mã đặt vé.
 </div>
 
 <div id="availability-message"
@@ -69,17 +71,37 @@
         Đang khôi phục lựa chọn...
     </p>
 
-    <div class="border rounded bg-light text-center p-3 mb-4">
+    <ul class="seat-legend list-unstyled d-flex flex-wrap gap-3 mb-3"
+        aria-label="Chú giải trạng thái ghế">
+        <li>
+            <span class="seat-swatch btn btn-outline-primary" aria-hidden="true">A1</span>
+            Ghế trống
+        </li>
+        <li>
+            <span class="seat-swatch btn btn-primary seat-swatch-selected" aria-hidden="true">A1</span>
+            Đang chọn (✓)
+        </li>
+        <li>
+            <span class="seat-swatch btn btn-secondary seat-swatch-booked" aria-hidden="true">A1</span>
+            Đã đặt (gạch chéo)
+        </li>
+        <li>
+            <span class="seat-swatch btn btn-secondary seat-swatch-inactive" aria-hidden="true">A1</span>
+            Ngừng sử dụng (✕)
+        </li>
+    </ul>
+
+    <div class="screen-bar border rounded bg-light text-center p-2 mb-4">
         MÀN HÌNH
     </div>
 
-    <div class="overflow-auto mb-4">
+    <div class="seat-map overflow-auto mb-4">
         @foreach (var row in Model.Seats.GroupBy(s => s.RowLabel))
         {
             <div class="d-flex align-items-center gap-2 mb-2"
                  style="min-width: max-content;">
 
-                <strong class="me-2" style="width: 35px;">
+                <strong class="seat-row-label me-2">
                     @row.Key
                 </strong>
 
@@ -101,10 +123,9 @@
                            autocomplete="off"
                            disabled="@unavailable" />
 
-                    <label class="btn @(unavailable
+                    <label class="btn seat-label @(unavailable
                                        ? "btn-secondary"
                                        : "btn-outline-primary")"
-                           style="width: 62px;"
                            for="seat-@seat.SeatId"
                            title="@status">
                         @seat.Label
@@ -115,8 +136,8 @@
     </div>
 
     <p class="small text-muted">
-        Viền xanh: ghế trống · Xanh đậm: đang chọn ·
-        Xám: đã đặt hoặc ngừng sử dụng
+        Di chuột hoặc đưa tiêu điểm vào ghế để xem trạng thái.
+        Dùng phím Tab để di chuyển và phím Space để chọn ghế.
     </p>
 
     <div class="border rounded p-3 mb-3" aria-live="polite">
@@ -133,18 +154,20 @@
 
     <p id="seat-error" class="text-danger" role="alert"></p>
 
-    <button type="submit"
-            id="submit-booking"
-            class="btn btn-primary"
-            disabled>
-        Xác nhận đặt vé
-    </button>
+    <div class="d-flex flex-wrap gap-2">
+        <button type="submit"
+                id="submit-booking"
+                class="btn btn-primary"
+                disabled>
+            Xác nhận đặt vé
+        </button>
 
-    <a asp-controller="Catalog"
-       asp-action="Index"
-       class="btn btn-outline-secondary">
-        Quay lại danh sách phim
-    </a>
+        <a asp-controller="Catalog"
+           asp-action="Index"
+           class="btn btn-outline-secondary">
+            Quay lại danh sách phim
+        </a>
+    </div>
 </form>
 
 @section Scripts {

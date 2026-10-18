@@ -1,0 +1,12 @@
+@page
+@model LockoutModel
+@{
+    ViewData["Title"] = "Tài khoản tạm khóa";
+}
+
+<h1 class="text-danger">@ViewData["Title"]</h1>
+<p>Tài khoản này đang bị tạm khóa. Vui lòng thử lại sau.</p>
+
+<a asp-area="" asp-controller="Catalog" asp-action="Index" class="btn btn-primary">
+    Về danh sách phim
+</a>
