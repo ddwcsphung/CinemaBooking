@@ -1,0 +1,55 @@
+@model int
+@{
+    // Trang lỗi theo mã HTTP (400, 403, 404...). Backend gọi view này
+    // qua UseStatusCodePagesWithReExecute hoặc trả View("StatusCode", mã).
+    var code = Model;
+    var custom = ViewData["StatusMessage"] as string;
+
+    var (title, message) = code switch
+    {
+        400 => ("Yêu cầu không hợp lệ",
+            "Dữ liệu gửi lên không đúng định dạng, ví dụ ngày xem hoặc mã không hợp lệ."),
+        403 => ("Không có quyền truy cập",
+            "Tài khoản của bạn không được phép thực hiện thao tác này."),
+        404 => ("Không tìm thấy trang",
+            "Nội dung bạn tìm không tồn tại, đã bị ẩn hoặc không còn mở bán."),
+        _ => ("Không thể xử lý yêu cầu",
+            "Hệ thống chưa xử lý được yêu cầu này. Vui lòng thử lại sau.")
+    };
+
+    ViewData["Title"] = title;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <p class="text-muted mb-1">Mã lỗi @code</p>
+        <h1 class="h2 mb-3">@title</h1>
+
+        <p class="lead">@(custom ?? message)</p>
+
+        <div class="d-flex flex-wrap gap-2 mt-4">
+            <a asp-area=""
+               asp-controller="Catalog"
+               asp-action="Index"
+               class="btn btn-primary">
+                Về danh sách phim
+            </a>
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-area=""
+                   asp-controller="Bookings"
+                   asp-action="Index"
+                   class="btn btn-outline-secondary">
+                    Vé của tôi
+                </a>
+            }
+
+            <button type="button"
+                    class="btn btn-outline-secondary"
+                    onclick="history.back()">
+                Quay lại trang trước
+            </button>
+        </div>
+    </div>
+</div>
