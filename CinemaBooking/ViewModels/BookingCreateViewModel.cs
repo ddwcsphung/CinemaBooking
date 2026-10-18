@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace CinemaBooking.ViewModels;
 
@@ -14,12 +14,10 @@ public class BookingCreateViewModel
 
     public decimal BasePrice { get; set; }
 
-    // Các mã ghế khách chọn và gửi lên server.
     [MinLength(1, ErrorMessage = "Vui lòng chọn ít nhất một ghế.")]
     [MaxLength(10, ErrorMessage = "Mỗi lần chỉ được đặt tối đa 10 ghế.")]
     public List<int> SelectedSeatIds { get; set; } = new();
 
-    // Danh sách ghế để vẽ sơ đồ.
     public List<BookingSeatViewModel> Seats { get; set; } = new();
 }
 

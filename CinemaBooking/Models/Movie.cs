@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace CinemaBooking.Models;
 
@@ -24,7 +24,7 @@ public class Movie
     [Display(Name = "Ngày khởi chiếu")]
     public DateTime ReleaseDate { get; set; } = DateTime.Today;
 
-    [StringLength(500)]
+    [StringLength(500, ErrorMessage = "Đường dẫn ảnh poster tối đa 500 ký tự.")]
     [Display(Name = "Đường dẫn ảnh poster")]
     public string? PosterUrl { get; set; }
 

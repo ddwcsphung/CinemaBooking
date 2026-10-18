@@ -32,7 +32,6 @@ public class BookingsController : Controller
         _logger = logger;
     }
 
-    // GET: /Bookings/Create?showtimeId=1
     [HttpGet]
     public async Task<IActionResult> Create(int showtimeId)
     {
@@ -49,9 +48,10 @@ public class BookingsController : Controller
                 s.Room.IsActive &&
                 s.StartTime > now);
 
-        if (showtime == null)
+        if (showtime == null ||
+            !await _context.Seats.AnyAsync(s => s.RoomId == showtime.RoomId && s.IsActive))
         {
-            return NotFound("Suất chiếu không còn mở bán.");
+            return NotFound();
         }
 
         var seats = await _context.Seats
@@ -90,13 +90,13 @@ public class BookingsController : Controller
         return View(model);
     }
 
-    // POST: /Bookings/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(
         BookingRequestViewModel request)
     {
-        if (!ModelState.IsValid)
+        if (!ModelState.IsValid || request.ShowtimeId <= 0 ||
+            request.SelectedSeatIds is not { Count: >= 1 and <= 10 })
         {
             return BookingError(
                 request.ShowtimeId,
@@ -121,147 +121,151 @@ public class BookingsController : Controller
                 "Danh sách ghế bị trùng. Vui lòng chọn lại.");
         }
 
-        try
+        for (var attempt = 1; attempt <= 3; attempt++)
         {
-            // Kiểm tra và lưu trong cùng một giao dịch.
-            await using var transaction =
-                await _context.Database.BeginTransactionAsync(
-                    IsolationLevel.Serializable);
-
-            var showtime = await _context.Showtimes
-                .Include(s => s.Movie)
-                .Include(s => s.Room)
-                .FirstOrDefaultAsync(s =>
-                    s.Id == request.ShowtimeId);
-
-            if (showtime == null ||
-                !showtime.IsActive ||
-                !showtime.Movie.IsActive ||
-                !showtime.Room.IsActive ||
-                showtime.StartTime <= CinemaNow)
-            {
-                return BookingError(
-                    request.ShowtimeId,
-                    "Suất chiếu không còn đủ điều kiện đặt vé.");
-            }
-
-            // Ghế phải thuộc đúng phòng và đang sử dụng.
-            var validSeatCount = await _context.Seats
-                .CountAsync(s =>
-                    seatIds.Contains(s.Id) &&
-                    s.RoomId == showtime.RoomId &&
-                    s.IsActive);
-
-            if (validSeatCount != seatIds.Length)
-            {
-                return BookingError(
-                    request.ShowtimeId,
-                    "Có ghế không hợp lệ hoặc đã ngừng sử dụng.");
-            }
-
-            var hasBookedSeat = await _context.BookingSeats
-                .AnyAsync(bs =>
-                    bs.ShowtimeId == showtime.Id &&
-                    seatIds.Contains(bs.SeatId));
-
-            if (hasBookedSeat)
-            {
-                return BookingError(
-                    request.ShowtimeId,
-                    "Có ghế vừa được người khác đặt. Vui lòng chọn lại.");
-            }
-
-            // Kiểm tra lại thời gian sau các truy vấn.
-            if (showtime.StartTime <= CinemaNow)
-            {
-                return BookingError(
-                    request.ShowtimeId,
-                    "Suất chiếu đã bắt đầu.");
-            }
-
-            var booking = new Booking
-            {
-                UserId = user.Id,
-                ShowtimeId = showtime.Id,
-                CreatedAtUtc = DateTimeOffset.UtcNow,
-                PaymentStatus = BookingPaymentStatus.Unpaid,
-
-                // Giá lấy từ database, không lấy từ trình duyệt.
-                TotalAmount = showtime.BasePrice * seatIds.Length,
-
-                BookingSeats = seatIds.Select(seatId =>
-                    new BookingSeat
-                    {
-                        ShowtimeId = showtime.Id,
-                        SeatId = seatId,
-                        UnitPrice = showtime.BasePrice
-                    }).ToList()
-            };
-
-            _context.Bookings.Add(booking);
-
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
-
-            // Đơn đã được lưu thành công.
-            // Lỗi dọn session không được biến thành thông báo đặt vé thất bại.
             try
             {
-                await HttpContext.Session.LoadAsync();
+                await using var transaction =
+                    await _context.Database.BeginTransactionAsync(
+                        IsolationLevel.Serializable);
 
-                var selectionKey =
-                    $"SeatSelection:{user.Id}:{booking.ShowtimeId}";
+                await ShowtimeLock.AcquireAsync(_context, request.ShowtimeId);
 
-                HttpContext.Session.Remove(selectionKey);
-                await HttpContext.Session.CommitAsync();
+                var showtime = await _context.Showtimes
+                    .Include(s => s.Movie)
+                    .Include(s => s.Room)
+                    .FirstOrDefaultAsync(s =>
+                        s.Id == request.ShowtimeId);
+
+                if (showtime == null ||
+                    !showtime.IsActive ||
+                    !showtime.Movie.IsActive ||
+                    !showtime.Room.IsActive ||
+                    showtime.StartTime <= CinemaNow)
+                {
+                    return ShowtimeUnavailable(
+                        showtime,
+                        "Suất chiếu không còn đủ điều kiện đặt vé. Vui lòng chọn suất khác.");
+                }
+
+                var validSeatCount = await _context.Seats
+                    .CountAsync(s =>
+                        seatIds.Contains(s.Id) &&
+                        s.RoomId == showtime.RoomId &&
+                        s.IsActive);
+
+                if (validSeatCount != seatIds.Length)
+                {
+                    return BookingError(
+                        request.ShowtimeId,
+                        "Có ghế không hợp lệ hoặc đã ngừng sử dụng.");
+                }
+
+                var hasBookedSeat = await _context.BookingSeats
+                    .AnyAsync(bs =>
+                        bs.ShowtimeId == showtime.Id &&
+                        seatIds.Contains(bs.SeatId));
+
+                if (hasBookedSeat)
+                {
+                    return BookingError(
+                        request.ShowtimeId,
+                        "Có ghế vừa được người khác đặt. Vui lòng chọn lại.");
+                }
+
+                if (showtime.StartTime <= CinemaNow)
+                {
+                    return ShowtimeUnavailable(
+                        showtime,
+                        "Suất chiếu đã bắt đầu. Vui lòng chọn suất khác.");
+                }
+
+                var booking = new Booking
+                {
+                    UserId = user.Id,
+                    ShowtimeId = showtime.Id,
+                    CreatedAtUtc = DateTimeOffset.UtcNow,
+                    PaymentStatus = BookingPaymentStatus.Unpaid,
+
+                    TotalAmount = showtime.BasePrice * seatIds.Length,
+
+                    BookingSeats = seatIds.Select(seatId =>
+                        new BookingSeat
+                        {
+                            ShowtimeId = showtime.Id,
+                            SeatId = seatId,
+                            UnitPrice = showtime.BasePrice
+                        }).ToList()
+                };
+
+                _context.Bookings.Add(booking);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                try
+                {
+                    await HttpContext.Session.LoadAsync();
+
+                    var selectionKey =
+                        $"SeatSelection:{user.Id}:{booking.ShowtimeId}";
+
+                    HttpContext.Session.Remove(selectionKey);
+                    await HttpContext.Session.CommitAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Đã lưu đơn {BookingId} nhưng chưa xóa được lựa chọn tạm.",
+                        booking.Id);
+                }
+
+                TempData["BookingSuccess"] = "Đặt vé thành công.";
+
+                return RedirectToAction(
+                    nameof(Details),
+                    new { id = booking.Id });
+            }
+            catch (DbUpdateException ex)
+                when (ex.GetBaseException() is SqlException sql &&
+                      (sql.Number == 2601 || sql.Number == 2627))
+            {
+                _logger.LogWarning(ex, "Trùng dữ liệu khi đặt vé suất {ShowtimeId}", request.ShowtimeId);
+                return BookingError(
+                    request.ShowtimeId,
+                    "Dữ liệu đặt vé bị trùng hoặc ghế vừa được đặt. "
+                    + "Vui lòng tải lại và chọn ghế.");
             }
             catch (Exception ex)
+                when (ex.GetBaseException() is SqlException sql &&
+                      sql.Number == 1205)
             {
-                _logger.LogWarning(
-                    ex,
-                    "Đã lưu đơn {BookingId} nhưng chưa xóa được lựa chọn tạm.",
-                    booking.Id);
+                _logger.LogWarning(ex, "Xung đột đặt vé suất {ShowtimeId}, lần {Attempt}", request.ShowtimeId, attempt);
+                if (attempt < 3)
+                {
+                    _context.ChangeTracker.Clear();
+                    await Task.Delay(50 * attempt);
+                    continue;
+                }
+                return BookingError(
+                    request.ShowtimeId,
+                    "Có người đang đặt vé cùng lúc. "
+                    + "Vui lòng kiểm tra ghế và thử lại.");
             }
+            catch (Exception ex) when (ex is DbUpdateException or SqlException)
+            {
+                _logger.LogError(ex, "Không thể lưu đơn đặt vé.");
 
-            TempData["BookingSuccess"] = "Đặt vé thành công.";
+                return BookingError(
+                    request.ShowtimeId,
+                    "Chưa xác nhận được kết quả đặt vé. Vui lòng kiểm tra lịch sử đặt vé trước khi thử lại.");
+            }
+        }
 
-            return RedirectToAction(
-                nameof(Details),
-                new { id = booking.Id });
-        }
-        catch (DbUpdateException ex)
-            when (ex.GetBaseException() is SqlException sql &&
-                  (sql.Number == 2601 || sql.Number == 2627))
-        {
-            _logger.LogWarning(ex, "Trùng dữ liệu khi đặt vé suất {ShowtimeId}", request.ShowtimeId);
-            // Database từ chối dữ liệu trùng.
-            return BookingError(
-                request.ShowtimeId,
-                "Dữ liệu đặt vé bị trùng hoặc ghế vừa được đặt. "
-                + "Vui lòng tải lại và chọn ghế.");
-        }
-        catch (Exception ex)
-            when (ex.GetBaseException() is SqlException sql &&
-                  sql.Number == 1205)
-        {
-            _logger.LogWarning(ex, "Xung đột đặt vé suất {ShowtimeId}", request.ShowtimeId);
-            // Hai giao dịch cạnh tranh: SQL Server hủy một giao dịch.
-            return BookingError(
-                request.ShowtimeId,
-                "Có người đang đặt vé cùng lúc. "
-                + "Vui lòng kiểm tra ghế và thử lại.");
-        }
-        catch (Exception ex) when (ex is DbUpdateException or SqlException)
-        {
-            _logger.LogError(ex, "Không thể lưu đơn đặt vé.");
-
-            return BookingError(
-                request.ShowtimeId,
-                "Chưa xác nhận được kết quả đặt vé. Vui lòng kiểm tra lịch sử đặt vé trước khi thử lại.");
-        }
+        return BookingError(request.ShowtimeId, "Vui lòng kiểm tra ghế và thử lại.");
     }
 
-    // GET: /Bookings
     public async Task<IActionResult> Index(int page = 1)
     {
         const int pageSize = 10;
@@ -273,7 +277,6 @@ public class BookingsController : Controller
             return Challenge();
         }
 
-        // Chỉ lấy các đơn của người đang đăng nhập.
         var query = _context.Bookings
             .AsNoTracking()
             .Where(b => b.UserId == userId);
@@ -303,7 +306,6 @@ public class BookingsController : Controller
         return View(bookings);
     }
 
-    // GET: /Bookings/Details/5
     public async Task<IActionResult> Details(int id)
     {
         var userId = _userManager.GetUserId(User);
@@ -320,7 +322,6 @@ public class BookingsController : Controller
                 b.Id == id &&
                 b.UserId == userId);
 
-        // Chỉ chủ đơn được xem.
         if (booking == null)
         {
             return NotFound();
@@ -329,9 +330,30 @@ public class BookingsController : Controller
         return View(booking);
     }
 
+    private IActionResult ShowtimeUnavailable(Showtime? showtime, string message)
+    {
+        TempData["BookingError"] = message;
+
+        if (showtime?.Movie.IsActive == true)
+        {
+            return RedirectToAction("Details", "Catalog", new
+            {
+                id = showtime.MovieId,
+                date = showtime.StartTime.ToString("yyyy-MM-dd")
+            });
+        }
+
+        return RedirectToAction("Index", "Catalog");
+    }
+
     private IActionResult BookingError(int showtimeId, string message)
     {
         TempData["BookingError"] = message;
+
+        if (showtimeId <= 0)
+        {
+            return RedirectToAction("Index", "Catalog");
+        }
 
         return RedirectToAction(
             nameof(Create),

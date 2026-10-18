@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using CinemaBooking.Models;
 using CinemaBooking.Data;
 
-
 [Authorize(Roles = "Admin")]
 public class GenresController : Controller
 {
@@ -19,13 +18,11 @@ public class GenresController : Controller
         _logger = logger;
     }
 
-    // GET: GENRES
     public async Task<IActionResult> Index()    
     {
         return View(await _context.Genres.ToListAsync());
     }
 
-    // GET: Genres/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -46,15 +43,11 @@ public class GenresController : Controller
         return View(genre);
     }
 
-    // GET: GENRES/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: GENRES/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,Name")] Genre genre)
@@ -77,7 +70,6 @@ public class GenresController : Controller
         return View(genre);
     }
 
-    // GET: GENRES/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -93,9 +85,6 @@ public class GenresController : Controller
         return View(genre);
     }
 
-    // POST: GENRES/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int? id, [Bind("Id,Name")] Genre genre)
@@ -129,7 +118,6 @@ public class GenresController : Controller
         return View(genre);
     }
 
-    // GET: GENRES/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -147,7 +135,6 @@ public class GenresController : Controller
         return View(genre);
     }
 
-    // POST: Genres/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int? id)
@@ -173,7 +160,6 @@ public class GenresController : Controller
                 return NotFound();
             }
 
-            // Kiểm tra cả phim đang hiển thị và phim đã ẩn.
             var isUsed = await _context.Movies
                 .AnyAsync(m => m.Genres.Any(g => g.Id == id.Value));
 
@@ -213,7 +199,6 @@ public class GenresController : Controller
                 + "hoặc đang được sử dụng.");
         }
 
-        // Trường hợp lỗi xảy ra trước khi lấy được thể loại.
         if (genre == null)
         {
             genre = await _context.Genres

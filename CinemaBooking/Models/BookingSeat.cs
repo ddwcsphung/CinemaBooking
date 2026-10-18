@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace CinemaBooking.Models;
 
@@ -16,7 +16,6 @@ public class BookingSeat
 
     public Seat Seat { get; set; } = null!;
 
-    // Giữ giá tại thời điểm đặt, dù giá suất chiếu thay đổi sau đó.
     [Display(Name = "Giá vé")]
     public decimal UnitPrice { get; set; }
 }

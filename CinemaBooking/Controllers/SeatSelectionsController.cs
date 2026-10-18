@@ -28,7 +28,6 @@ public class SeatSelectionsController : ControllerBase
             .ToOffset(TimeSpan.FromHours(7))
             .DateTime;
 
-    // GET: /api/showtimes/4/selection
     [HttpGet]
     public async Task<IActionResult> GetSelection(
         int showtimeId,
@@ -80,7 +79,6 @@ public class SeatSelectionsController : ControllerBase
             }
         }
 
-        // Chỉ trả lại ghế vẫn còn trống và đang sử dụng.
         var validIds = await GetAvailableSeatIdsAsync(
             showtimeId,
             roomId.Value,
@@ -95,7 +93,6 @@ public class SeatSelectionsController : ControllerBase
         });
     }
 
-    // POST: /api/showtimes/4/selection
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveSelection(
@@ -118,11 +115,15 @@ public class SeatSelectionsController : ControllerBase
             });
         }
 
-        // ApiController kiểm tra Required và MaxLength trước action.
-        var requestedIds = request.SeatIds.Distinct().ToList();
+        if (!ModelState.IsValid || request.SeatIds is not { Count: <= 10 } seatIds)
+        {
+            return BadRequest(new { message = "Danh sách ghế không hợp lệ." });
+        }
+
+        var requestedIds = seatIds.Distinct().ToList();
 
         if (requestedIds.Any(id => id <= 0) ||
-            requestedIds.Count != request.SeatIds.Count)
+            requestedIds.Count != seatIds.Count)
         {
             return BadRequest(new
             {

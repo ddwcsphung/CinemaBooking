@@ -1,4 +1,4 @@
-﻿using CinemaBooking.Data;
+using CinemaBooking.Data;
 using CinemaBooking.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -22,7 +22,6 @@ public class CatalogController : Controller
         _context = context;
     }
 
-    // GET: /Catalog
     public async Task<IActionResult> Index(
         string? keyword,
         int? genreId,
@@ -34,13 +33,11 @@ public class CatalogController : Controller
             .AsNoTracking()
             .Where(m => m.IsActive);
 
-        // Tìm theo tên phim.
         if (!string.IsNullOrWhiteSpace(keyword))
         {
             query = query.Where(m => m.Title.Contains(keyword));
         }
 
-        // Lọc theo thể loại.
         if (genreId.HasValue && genreId.Value > 0)
         {
             query = query.Where(m =>
@@ -56,7 +53,6 @@ public class CatalogController : Controller
         var totalPages = (int)Math.Ceiling(
             totalItems / (double)PageSize);
 
-        // Giữ số trang trong phạm vi hợp lệ.
         page = Math.Clamp(page, 1, Math.Max(1, totalPages));
 
         var movies = await query
@@ -91,14 +87,13 @@ public class CatalogController : Controller
         return View(model);
     }
 
-    // GET: /Catalog/Details/5
     public async Task<IActionResult> Details(
         int id,
         DateTime? date)
     {
         if (!ModelState.IsValid)
         {
-            return BadRequest("Ngày xem không hợp lệ.");
+            return BadRequest();
         }
 
         var movie = await _context.Movies
@@ -115,7 +110,6 @@ public class CatalogController : Controller
         var now = CinemaNow;
         var selectedDate = (date ?? now).Date;
 
-        // Chọn ngày cũ thì quay về ngày hiện tại.
         if (selectedDate < now.Date)
         {
             selectedDate = now.Date;
@@ -123,7 +117,7 @@ public class CatalogController : Controller
 
         if (selectedDate == DateTime.MaxValue.Date)
         {
-            return BadRequest("Ngày xem không hợp lệ.");
+            return BadRequest();
         }
 
         var nextDate = selectedDate.AddDays(1);

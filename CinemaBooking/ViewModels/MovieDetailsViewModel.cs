@@ -1,4 +1,4 @@
-﻿using CinemaBooking.Models;
+using CinemaBooking.Models;
 
 namespace CinemaBooking.ViewModels;
 

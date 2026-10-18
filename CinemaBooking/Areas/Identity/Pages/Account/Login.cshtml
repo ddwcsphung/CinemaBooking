@@ -43,7 +43,6 @@
             <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Đăng ký tài khoản mới</a>
         </p>
 
-        @* Chỉ hiển thị đăng nhập ngoài khi đã cấu hình nhà cung cấp. *@
         @if ((Model.ExternalLogins?.Count ?? 0) > 0)
         {
             <section class="mt-4">

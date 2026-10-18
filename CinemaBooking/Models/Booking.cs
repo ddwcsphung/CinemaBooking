@@ -1,9 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 
 namespace CinemaBooking.Models;
 
-// Trạng thái thanh toán của đơn.
 public enum BookingPaymentStatus
 {
     [Display(Name = "Chưa thanh toán")]
@@ -32,8 +31,6 @@ public class Booking
 
     public Showtime Showtime { get; set; } = null!;
 
-    // Lưu thời điểm đặt theo UTC.
-    // Khi hiển thị sẽ chuyển sang giờ Việt Nam.
     [Display(Name = "Thời điểm đặt")]
     public DateTimeOffset CreatedAtUtc { get; set; } =
         DateTimeOffset.UtcNow;

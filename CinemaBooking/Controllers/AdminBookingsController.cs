@@ -19,7 +19,6 @@ public class AdminBookingsController : Controller
         _logger = logger;
     }
 
-    // GET: /AdminBookings
     public async Task<IActionResult> Index(
         string? keyword,
         int page = 1)
@@ -67,7 +66,6 @@ public class AdminBookingsController : Controller
         return View(bookings);
     }
 
-    // POST: /AdminBookings/ConfirmPayment/5
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConfirmPayment(
@@ -77,13 +75,11 @@ public class AdminBookingsController : Controller
     {
         if (id <= 0)
         {
-            return BadRequest("Mã đơn đặt vé không hợp lệ.");
+            return BadRequest();
         }
 
         try
         {
-            // Chỉ cập nhật khi đơn vẫn chưa thanh toán.
-            // Việc kiểm tra và cập nhật nằm trong cùng một câu SQL.
             var affectedRows = await _context.Bookings
                 .Where(b =>
                     b.Id == id &&

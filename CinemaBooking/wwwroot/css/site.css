@@ -12,7 +12,6 @@ html {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
-/* Viền tiêu điểm rõ ràng khi dùng bàn phím. */
 a:focus-visible,
 button:focus-visible,
 .btn-check:focus-visible + .btn,
@@ -31,7 +30,6 @@ summary:focus-visible {
   text-align: start;
 }
 
-/* Bố cục chung */
 .skip-link {
   position: absolute;
   top: .5rem;
@@ -65,7 +63,6 @@ main:focus {
   margin-bottom: 1rem;
 }
 
-/* Poster phim */
 .poster {
   display: block;
   width: 100%;
@@ -83,7 +80,6 @@ main:focus {
   margin-inline: auto;
 }
 
-/* Sơ đồ ghế */
 .seat-map {
   padding-bottom: .5rem;
 }
@@ -114,7 +110,6 @@ main:focus {
   align-items: center;
 }
 
-/* Ngoài màu sắc, mỗi trạng thái có thêm dấu hiệu hình dạng. */
 .btn-check:checked + .seat-label::after,
 .seat-swatch-selected::after {
   content: " ✓";
