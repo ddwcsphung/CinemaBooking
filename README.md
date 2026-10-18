@@ -89,3 +89,11 @@ git switch -c feature/ten-cong-viec
 ```
 
 Xem `docs/kien-truc.md` để biết luồng nghiệp vụ, ERD và hợp đồng API.
+
+## Bản bàn giao với database
+
+Chạy `START_DEMO.cmd` từ thư mục chứa solution để tạo database `CinemaBooking_Submission`, bổ sung dữ liệu demo và mở server tại `http://localhost:5175`. Cần .NET 10 SDK và SQL Server Express LocalDB. Mở URL khi cửa sổ báo `Now listening on`.
+
+Tài khoản `demo.admin@example.com`, `demo.a@example.com`, `demo.b@example.com` dùng mật khẩu demo công khai `CinemaDemo@2026!`. Chỉ dùng trên máy demo cá nhân.
+
+Bộ SQL đầy đủ nằm trong thư mục `Database` ở cấp ngoài của gói nộp, hoặc trong thư mục gốc repo. `CinemaBooking_Full.sql` tạo schema và dữ liệu theo ngày chạy; không xóa database đã có.

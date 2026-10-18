@@ -1,0 +1,36 @@
+﻿DATABASE CINEMABOOKING
+
+Tên database mặc định: CinemaBooking_Submission.
+SQL Server LocalDB: (localdb)\MSSQLLocalDB, Windows Authentication.
+
+Cách tự động: chạy MO_UNG_DUNG.cmd ở ngoài thư mục này. EF Core áp dụng
+migration và tạo dữ liệu demo. Không cần cài dotnet-ef để dùng cách này.
+
+Cách SQL: mở CinemaBooking_Full.sql trong SQL Server Management Studio
+và chạy toàn bộ, hoặc chạy CAI_DATABASE.cmd nếu có sqlcmd.
+File tổng hợp đã chứa cả 01, 02, 03, 04 nên không cần chạy lại từng file.
+Nếu tách riêng, thứ tự là 01_CreateDatabase, 02_Schema, 03_DemoData, 04_Verify.
+Schema có điều kiện kiểm tra lịch sử migration. Demo không ghi đè dữ liệu có sẵn.
+Tuyệt đối không thêm lệnh DROP DATABASE vào kịch bản nộp.
+
+SQL Server khác: chạy file SQL trên server đó, rồi sửa DefaultConnection
+trong SourceCode\CinemaBooking\appsettings.json hoặc Manage User Secrets.
+Ví dụ Windows Authentication:
+Server=TEN_MAY\SQLEXPRESS;Database=CinemaBooking_Submission;Trusted_Connection=True;MultipleActiveResultSets=true
+Chạy từ Visual Studio để dùng cấu hình vừa đổi. START_DEMO.cmd chủ đích dùng LocalDB.
+Chứng chỉ SQL Server cần hợp lệ nếu kết nối yêu cầu mã hóa. Cấu hình tài khoản
+SQL riêng bằng User Secrets nếu không dùng Windows Authentication.
+
+Nội dung schema: 7 bảng nghiệp vụ chính, bảng nối GenreMovie, 7 bảng Identity
+và __EFMigrationsHistory. Unique index (ShowtimeId, SeatId) ngăn bán trùng ghế.
+Khóa ngoại ghép BookingSeats(BookingId,ShowtimeId) buộc ghế thuộc đúng suất của đơn.
+Tiền decimal(18,2), thời điểm đơn DateTimeOffset theo UTC, lịch rạp theo UTC+7.
+15 bảng ứng dụng, 16 bảng nếu tính cả __EFMigrationsHistory.
+
+Dữ liệu: 10 phim, 3 thể loại, 4 phòng, 45 ghế, 9 suất, 12 đơn và 3 tài khoản demo.
+Lịch mới tạo nằm vào ngày chạy cộng 1 và 2 ngày; một suất đóng bán để kiểm thử.
+Mật khẩu demo: CinemaDemo@2026!. SQL chỉ chứa hash Identity của mật khẩu demo,
+không chứa tài khoản hay dữ liệu cá nhân từ database cũ của nhóm.
+
+04_Verify.sql kiểm tra dữ liệu, quyền Admin, ghế trùng và các khóa ngoại.
+Khi hoàn tất, kết quả trả về DATABASE_OK.

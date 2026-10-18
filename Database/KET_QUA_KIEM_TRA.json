@@ -1,0 +1,297 @@
+{
+  "checkedDate": "2026-10-19",
+  "regressionChecks": [
+    {
+      "name": "Migration và demo seed chạy lại không tạo trùng",
+      "passed": true
+    },
+    {
+      "name": "Áp dụng đầy đủ migration",
+      "passed": true
+    },
+    {
+      "name": "Đăng nhập demo.a@example.com",
+      "passed": true
+    },
+    {
+      "name": "Đăng nhập demo.b@example.com",
+      "passed": true
+    },
+    {
+      "name": "Đăng nhập demo.admin@example.com",
+      "passed": true
+    },
+    {
+      "name": "Đăng nhập demo.admin@example.com",
+      "passed": true
+    },
+    {
+      "name": "Ngày sai trả 400 có layout",
+      "passed": true
+    },
+    {
+      "name": "URL không tồn tại trả 404 có layout",
+      "passed": true
+    },
+    {
+      "name": "API chưa đăng nhập trả 401",
+      "passed": true
+    },
+    {
+      "name": "API không bị đổi thành HTML trang lỗi",
+      "passed": true
+    },
+    {
+      "name": "Khách chưa đăng nhập bị yêu cầu đăng nhập",
+      "passed": true
+    },
+    {
+      "name": "Khách thường không mở được quản trị",
+      "passed": true
+    },
+    {
+      "name": "Poster 501 ký tự báo lỗi tiếng Việt",
+      "passed": true
+    },
+    {
+      "name": "Poster không hợp lệ không tạo phim",
+      "passed": true
+    },
+    {
+      "name": "POST quản trị thiếu antiforgery bị chặn",
+      "passed": true
+    },
+    {
+      "name": "Chặn JSON selection {}",
+      "passed": true
+    },
+    {
+      "name": "Chặn JSON selection {\"seatIds\":null}",
+      "passed": true
+    },
+    {
+      "name": "Chặn JSON selection {\"seatIds\":[-1]}",
+      "passed": true
+    },
+    {
+      "name": "Chặn JSON selection {\"seatIds\":[0]}",
+      "passed": true
+    },
+    {
+      "name": "Chặn JSON selection {\"seatIds\":[1,1]}",
+      "passed": true
+    },
+    {
+      "name": "Chặn JSON selection {",
+      "passed": true
+    },
+    {
+      "name": "Chặn JSON selection {\"seatIds\":[1,2,3,4,5,6,7,8,9,10,11]}",
+      "passed": true
+    },
+    {
+      "name": "POST selection thiếu token bị chặn",
+      "passed": true
+    },
+    {
+      "name": "Lưu lựa chọn hợp lệ",
+      "passed": true
+    },
+    {
+      "name": "Khôi phục đúng lựa chọn",
+      "passed": true
+    },
+    {
+      "name": "Lựa chọn không lộ sang tài khoản B",
+      "passed": true
+    },
+    {
+      "name": "Body thiếu trường không xóa lựa chọn cũ",
+      "passed": true
+    },
+    {
+      "name": "Khôi phục loại ghế bị tắt",
+      "passed": true
+    },
+    {
+      "name": "Danh sách rỗng xóa lựa chọn",
+      "passed": true
+    },
+    {
+      "name": "Ghế khác nhau cùng suất lượt 1",
+      "passed": true
+    },
+    {
+      "name": "Ghế khác nhau cùng suất lượt 2",
+      "passed": true
+    },
+    {
+      "name": "Ghế khác nhau cùng suất lượt 3",
+      "passed": true
+    },
+    {
+      "name": "Ghế khác nhau cùng suất lượt 4",
+      "passed": true
+    },
+    {
+      "name": "Ghế khác nhau cùng suất lượt 5",
+      "passed": true
+    },
+    {
+      "name": "Ghế khác nhau cùng suất lượt 6",
+      "passed": true
+    },
+    {
+      "name": "Ghế khác nhau cùng suất lượt 7",
+      "passed": true
+    },
+    {
+      "name": "Ghế khác nhau cùng suất lượt 8",
+      "passed": true
+    },
+    {
+      "name": "Ghế khác nhau cùng suất lượt 9",
+      "passed": true
+    },
+    {
+      "name": "Ghế khác nhau cùng suất lượt 10",
+      "passed": true
+    },
+    {
+      "name": "Cùng ghế chỉ một đơn thành công",
+      "passed": true
+    },
+    {
+      "name": "Cùng ghế vật lý ở hai suất đều đặt được",
+      "passed": true
+    },
+    {
+      "name": "Đặt vé hợp lệ",
+      "passed": true
+    },
+    {
+      "name": "Giá lấy từ server",
+      "passed": true
+    },
+    {
+      "name": "Đặt xong xóa session",
+      "passed": true
+    },
+    {
+      "name": "Ngày đặt không in mã CSharp",
+      "passed": true
+    },
+    {
+      "name": "B không xem được đơn của A",
+      "passed": true
+    },
+    {
+      "name": "Khách không xác nhận được thanh toán",
+      "passed": true
+    },
+    {
+      "name": "Hai Admin xác nhận cùng đơn an toàn",
+      "passed": true
+    },
+    {
+      "name": "Xác nhận lại không tạo đơn mới",
+      "passed": true
+    },
+    {
+      "name": "Admin đóng bán",
+      "passed": true
+    },
+    {
+      "name": "Đóng bán lặp không đảo lại",
+      "passed": true
+    },
+    {
+      "name": "Suất đóng bán chuyển về Catalog",
+      "passed": true
+    },
+    {
+      "name": "Thông báo lỗi đặt vé hiện trên Catalog",
+      "passed": true
+    },
+    {
+      "name": "Suất đóng bán không mở form đặt vé",
+      "passed": true
+    },
+    {
+      "name": "Không sửa suất có đơn",
+      "passed": true
+    },
+    {
+      "name": "Không xóa suất có đơn",
+      "passed": true
+    },
+    {
+      "name": "Không có ghế trùng trong database",
+      "passed": true
+    },
+    {
+      "name": "Lỗi ghi giữa giao dịch rollback toàn bộ",
+      "passed": true
+    },
+    {
+      "name": "Poster dữ liệu cũ trả ảnh JPEG",
+      "passed": true
+    },
+    {
+      "name": "Catalog có poster và bộ lọc",
+      "passed": true
+    },
+    {
+      "name": "Trang tài khoản tiếng Việt",
+      "passed": true
+    },
+    {
+      "name": "Phòng không còn ghế hoạt động không mở đặt vé",
+      "passed": true
+    }
+  ],
+  "sqlImportedDatabaseChecks": [
+    {
+      "name": "SQL imported account can login demo.a@example.com",
+      "passed": true
+    },
+    {
+      "name": "SQL imported account can login demo.admin@example.com",
+      "passed": true
+    },
+    {
+      "name": "Catalog serves SQL imported movies",
+      "passed": true
+    },
+    {
+      "name": "SQL imported seat API returns 15 seats",
+      "passed": true
+    },
+    {
+      "name": "Booking on SQL imported database commits",
+      "passed": true
+    },
+    {
+      "name": "Booked seat is visible in API",
+      "passed": true
+    },
+    {
+      "name": "SQL imported Admin has management access",
+      "passed": true
+    },
+    {
+      "name": "Admin confirms payment on SQL imported database",
+      "passed": true
+    },
+    {
+      "name": "Customer sees paid status",
+      "passed": true
+    }
+  ],
+  "sqlFreshInstall": "passed",
+  "sqlRepeatInstall": "passed",
+  "dbccCheckDb": "passed",
+  "launcherHttpStatus": 200,
+  "buildErrors": 0,
+  "buildWarnings": 0
+}

@@ -1,0 +1,53 @@
+﻿CINEMABOOKING
+Sản phẩm bàn giao ngày 19/10/2026
+Trường Đại học Giao thông Vận tải
+
+1. MỞ CHẠY NHANH
+Giải nén toàn bộ gói vào thư mục có quyền ghi, ví dụ D:\CinemaBookingNopBai.
+Máy cần .NET 10 SDK và SQL Server Express LocalDB. Nếu dùng Visual Studio,
+cài workload ASP.NET and web development và thành phần SQL Server Express LocalDB.
+Mở START_DEMO.cmd. Lần đầu cần Internet để NuGet tải các thư viện.
+Chờ hiện "Now listening on", mở http://localhost:5175 trong trình duyệt.
+Giữ cửa sổ chạy trong lúc sử dụng. Nhấn Ctrl+C để dừng.
+Script tự tạo database CinemaBooking_Submission và dữ liệu demo bằng EF Core.
+Không cần cài Visual Studio nếu máy đã có .NET SDK và LocalDB.
+
+2. TÀI KHOẢN DEMO
+Quản trị: demo.admin@example.com
+Khách A: demo.a@example.com
+Khách B: demo.b@example.com
+Mật khẩu chung: CinemaDemo@2026!
+Đây là tài khoản và mật khẩu công khai chỉ dùng trong bài demo trên máy cá nhân.
+Không đưa cấu hình demo lên hệ thống công khai.
+
+3. DEMO CHỨC NĂNG
+Đăng nhập khách, mở phim Hành trình bình minh và chọn ngày mai hoặc ngày kế tiếp.
+Chọn suất còn ghế, đặt vé, mở Vé của tôi và chi tiết đơn.
+Đăng xuất, đăng nhập Admin, mở Quản trị và xác nhận thanh toán tại quầy.
+Chạy lại script vào ngày khác sẽ bổ sung lịch tương lai, không đổi vé cũ.
+Một phòng trống và một phòng có ghế ngừng hoạt động phục vụ kiểm thử điều kiện biên.
+Nếu các tài khoản demo đã tồn tại thì seeder giữ nguyên mật khẩu đã có.
+
+4. MỞ SOURCE BẰNG VISUAL STUDIO
+Mở CinemaBooking.slnx.
+Nhấn phải project CinemaBooking rồi Set as Startup Project.
+Sau khi đã chạy START_DEMO.cmd ít nhất một lần, có thể dừng script,
+chọn profile http và Ctrl+F5 trong Visual Studio. Đừng chạy hai server trùng cổng.
+Nếu máy có User Secrets cũ ghi đè connection string, hãy dùng START_DEMO.cmd
+hoặc sửa DefaultConnection trong Manage User Secrets về CinemaBooking_Submission.
+Profile https dùng https://localhost:7276, cần chứng chỉ phát triển đã tin cậy.
+
+5. DATABASE
+Database\CinemaBooking_Full.sql gồm tạo database, migration, dữ liệu và kiểm tra.
+Có thể mở bằng SSMS, kết nối (localdb)\MSSQLLocalDB và Execute toàn file.
+Hoặc chạy Database\CAI_DATABASE.cmd nếu máy có sqlcmd.
+Chỉ cần một cách khởi tạo: script SQL hoặc START_DEMO.cmd. Chạy lại không xóa dữ liệu.
+SQL tạo lịch tương đối theo ngày chạy. Tất cả dữ liệu bàn giao là dữ liệu demo.
+Để dùng SQL Server khác, xem Database\HUONG_DAN_DATABASE.txt.
+
+6. PHẠM VI
+CRUD quản trị, phân quyền, catalog, tìm kiếm/lọc/phân trang, API/AJAX ghế,
+session, đặt vé chống trùng, lịch sử và xác nhận thanh toán tại quầy.
+Chưa tích hợp thanh toán trực tuyến, hủy/hoàn tiền hoặc gửi email.
+Giao diện tiếng Việt, tiền vi-VN và giờ Việt Nam; chưa có chuyển đổi đa ngôn ngữ.
+Source có README, docs và bộ kiểm thử tự động. Gói này không gồm báo cáo hay slide.
