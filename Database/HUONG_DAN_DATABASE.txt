@@ -3,7 +3,7 @@
 Tên database mặc định: CinemaBooking_Submission.
 SQL Server LocalDB: (localdb)\MSSQLLocalDB, Windows Authentication.
 
-Cách tự động: chạy MO_UNG_DUNG.cmd ở ngoài thư mục này. EF Core áp dụng
+Cách tự động: chạy START_DEMO.cmd ở thư mục gốc repo. EF Core áp dụng
 migration và tạo dữ liệu demo. Không cần cài dotnet-ef để dùng cách này.
 
 Cách SQL: mở CinemaBooking_Full.sql trong SQL Server Management Studio
@@ -14,7 +14,7 @@ Schema có điều kiện kiểm tra lịch sử migration. Demo không ghi đè
 Tuyệt đối không thêm lệnh DROP DATABASE vào kịch bản nộp.
 
 SQL Server khác: chạy file SQL trên server đó, rồi sửa DefaultConnection
-trong SourceCode\CinemaBooking\appsettings.json hoặc Manage User Secrets.
+trong CinemaBooking\appsettings.json hoặc Manage User Secrets.
 Ví dụ Windows Authentication:
 Server=TEN_MAY\SQLEXPRESS;Database=CinemaBooking_Submission;Trusted_Connection=True;MultipleActiveResultSets=true
 Chạy từ Visual Studio để dùng cấu hình vừa đổi. START_DEMO.cmd chủ đích dùng LocalDB.
